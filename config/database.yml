@@ -1,0 +1,89 @@
+# SQLite configuration example
+default_sqlite_dev: &default_sqlite_dev
+  adapter: sqlite
+  database: db/fly_cube_dev.sqlite3
+
+default_sqlite_prod: &default_sqlite_prod
+  adapter: sqlite
+  database: db/fly_cube_prod.sqlite3
+
+# PostgreSQL TCP configuration example
+default_postgresql_dev: &default_postgresql_dev
+  adapter: postgresql
+  database: fly_cube_dev
+  host: 127.0.0.1
+  port: 5432
+  username: postgres
+  password: ""
+
+default_postgresql_prod: &default_postgresql_prod
+  adapter: postgresql
+  database: fly_cube_prod
+  host: 127.0.0.1
+  port: 5432
+  username: postgres
+  password: ""
+
+# PostgreSQL UNIX configuration example
+default_postgresql_unix_dev: &default_postgresql_unix_dev
+  adapter: postgresql
+  database: fly_cube_dev
+  unix_socket_dir: /var/run/postgresql
+  username: postgres
+  password: ""
+
+default_postgresql_unix_prod: &default_postgresql_unix_prod
+  adapter: postgresql
+  database: fly_cube_prod
+  unix_socket_dir: /var/run/postgresql
+  username: postgres
+  password: ""
+
+# MySQL TCP configuration example
+default_mysql_dev: &default_mysql_dev
+  adapter: mysql
+  database: fly_cube_dev
+  host: 127.0.0.1
+  port: 3306
+  username: root
+  password: ""
+
+default_mysql_prod: &default_mysql_prod
+  adapter: mysql
+  database: fly_cube_prod
+  host: 127.0.0.1
+  port: 3306
+  username: root
+  password: ""
+
+# MySQL UNIX configuration example
+default_mysql__unix_dev: &default_mysql_unix_dev
+  adapter: mysql
+  database: fly_cube_dev
+  unix_socket: /run/mysql/mysql.sock
+  username: root
+  password: ""
+
+default_mysql_unix_prod: &default_mysql_unix_prod
+  adapter: mysql
+  database: fly_cube_prod
+  unix_socket: /run/mysql/mysql.sock
+  username: root
+  password: ""
+
+
+# ENV sections
+production:
+  <<: *default_sqlite_prod
+
+development:
+  <<: *default_sqlite_dev
+
+# Secondary ENV sections
+production_secondary:
+#  test: *default_postgresql_prod
+#  test-2: *default_postgresql_unix_prod
+
+development_secondary:
+#  test: *default_postgresql_dev
+#  test-2: *default_postgresql_unix_dev
