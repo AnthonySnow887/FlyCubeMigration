@@ -1,0 +1,4 @@
+psycopg2~=2.7.4
+mysql-connector-python~=8.0.19
+PyYAML~=5.1.2
+requests~=2.20.1
