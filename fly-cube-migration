@@ -12,7 +12,7 @@ from src.Database.DatabaseFactory import DatabaseFactory
 from src.Migration.MigrationCore import MigrationCore
 from src.Settings.Settings import Settings
 
-version = "1.0.0"
+version = "1.0.1"
 url_fly_cube_migration_latest = "https://api.github.com/repos/AnthonySnow887/FlyCubeMigration/releases/latest"
 
 

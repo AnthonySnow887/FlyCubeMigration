@@ -1,3 +1,5 @@
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, module='psycopg2')
 import psycopg2
 import psycopg2.extras
 import psycopg2.extensions
