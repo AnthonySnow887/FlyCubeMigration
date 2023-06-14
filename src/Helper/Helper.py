@@ -92,7 +92,20 @@ class Helper:
         return string
 
     @staticmethod
+    def to_underscore(string: str) -> str:
+        under_string = ''
+        for item in string:
+            if item.isupper():
+                if len(under_string) > 0:
+                    under_string += "_"
+                under_string += item.lower()
+            else:
+                under_string += item
+        return under_string
+
+    @staticmethod
     def to_camelcase(string: str) -> str:
+        string = Helper.to_underscore(string)
         string = string.replace('-', ' ')
         string = string.replace('_', ' ')
         return ''.join(x for x in string.title() if not x.isspace())
