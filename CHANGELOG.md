@@ -1,3 +1,7 @@
+# 1.0.2 (23.10.2023)
+
+ * Fix fly-cube-migration main (abspath -> realpath)
+
 # 1.0.1 (14.06.2023)
 
  * Fix psycopg2 user warning
