@@ -1,6 +1,7 @@
-# 1.0.2 (23.10.2023)
+# 1.0.2 (??.10.2023)
 
  * Fix fly-cube-migration main (abspath -> realpath)
+ * Added check and disable application running is root user 
 
 # 1.0.1 (14.06.2023)
 
