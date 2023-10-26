@@ -1,0 +1,3 @@
+#!/bin/bash
+rm -f -R /usr/local/FlyCubeMigration/
+rm /usr/bin/fly-cube-migration
