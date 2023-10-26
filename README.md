@@ -21,9 +21,15 @@ Supported databases
 Operating systems tested
 ------------------------
 
+- Alma Linux 9.1
+- Alt Linux 8.1 and later
+- Astra Linux 1.6 / 1.7 / 2.12
+- CentOS 8.5
+- Debian 12 and later
 - OpenSUSE 15.1 and later
-- CentOS 8
-- Ubuntu 20.04
+- RedOS 7
+- Rosa Linux 12.4
+- Ubuntu 20.04 and later
 
 Basic system requirements
 -------------------------
