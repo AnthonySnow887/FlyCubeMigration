@@ -1,0 +1,13 @@
+Source: fly-cube-migration
+Section: development/python
+Priority: extra
+Maintainer: AnthonySnow887 <AnthonySnow887@build>
+
+Package: fly-cube-migration
+Architecture: amd64
+Depends: python3.7, python3.7-psycopg2, python3-yaml, python3-mysql.connector (>=8.0.15), python3-requests
+Description: Tool for creating, installing, reverting database migrations
+ FlyCubeMigration is a tool developed in Python that follows the ideology and principles of database migration found in Ruby on Rails.
+ FlyCubeMigration completely repeats the functionality of the migration core implemented in the MVC Web Framework FlyCubePHP.
+ Installation of each migration is performed in transactional mode and in case of errors, rolls back the state of the database to the stage before installation.
+

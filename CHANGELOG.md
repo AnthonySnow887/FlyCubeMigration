@@ -1,3 +1,9 @@
+# 1.0.2 (26.10.2023)
+
+ * Fix fly-cube-migration main (abspath -> realpath)
+ * Added check and disable application running is root user 
+ * Added files for build RPM/DEB packages
+
 # 1.0.1 (14.06.2023)
 
  * Fix psycopg2 user warning
