@@ -1,8 +1,8 @@
 
 #
-# Directory for database config file 'database.yml'
+# Directory for config files: 'fly-cube-migration.yml', 'database.yml' and 'post-scripts.yml'
 #
-FLY_CUBE_MIGRATION_DB_CONFIG_DIR: "config/"
+FLY_CUBE_MIGRATION_CONFIG_DIR: "config/"
 
 #
 # Directory for database migration files

@@ -17,6 +17,7 @@ from src.ConsoleHelper.ConsoleHelper import ConsoleHelper
 from src.Database.DatabaseFactory import DatabaseFactory
 from src.Migration.MigrationCore import MigrationCore
 from src.Settings.Settings import Settings
+from src.PostScripts.PostScripts import PostScripts
 
 version = "1.0.2"
 url_fly_cube_migration_latest = "https://api.github.com/repos/AnthonySnow887/FlyCubeMigration/releases/latest"
@@ -28,8 +29,8 @@ def settings_dir() -> str:
     return s.value('config-dir', os.path.dirname(os.path.realpath(__file__)) + "/config")
 
 
-def db_settings_dir() -> str:
-    tmp_dir = Config.instance().arg(Config.TAG_DB_CONFIG_DIR, os.path.dirname(os.path.realpath(__file__)) + "/config")
+def configs_dir() -> str:
+    tmp_dir = Config.instance().arg(Config.TAG_CONFIG_DIR, os.path.dirname(os.path.realpath(__file__)) + "/config")
     return Helper.splice_symbol_last(tmp_dir, '/')
 
 
@@ -48,7 +49,7 @@ def set_config_dir(cmd, value):
     Config.instance().set_arg(Config.instance().env_key(), env)
     # Re-Load database factory
     DatabaseFactory.instance().reset_config()
-    DatabaseFactory.instance().load_config(db_settings_dir())
+    DatabaseFactory.instance().load_config(configs_dir())
     # Re-Load migration core
     MigrationCore.instance().reset_migrations()
     MigrationCore.instance().load_migrations(db_migrations_dir())
@@ -110,7 +111,7 @@ def set_env(cmd, value):
     Config.instance().set_arg(Config.instance().env_key(), value)
     # reload database factory config
     DatabaseFactory.instance().reset_config()
-    DatabaseFactory.instance().load_config(db_settings_dir())
+    DatabaseFactory.instance().load_config(configs_dir())
 
 
 def set_show_output(cmd, value):
@@ -311,7 +312,7 @@ def db_create_all(cmd, value):
     #
     Config.instance().set_arg(Config.instance().env_key(), 'development')
     DatabaseFactory.instance().reset_config()
-    DatabaseFactory.instance().load_config(db_settings_dir())
+    DatabaseFactory.instance().load_config(configs_dir())
     s_db = DatabaseFactory.instance().secondary_databases()
 
     # create primary
@@ -325,7 +326,7 @@ def db_create_all(cmd, value):
     #
     Config.instance().set_arg(Config.instance().env_key(), 'production')
     DatabaseFactory.instance().reset_config()
-    DatabaseFactory.instance().load_config(db_settings_dir())
+    DatabaseFactory.instance().load_config(configs_dir())
     s_db = DatabaseFactory.instance().secondary_databases()
 
     # create primary
@@ -372,7 +373,7 @@ def db_drop_all(cmd, value):
     #
     Config.instance().set_arg(Config.instance().env_key(), 'development')
     DatabaseFactory.instance().reset_config()
-    DatabaseFactory.instance().load_config(db_settings_dir())
+    DatabaseFactory.instance().load_config(configs_dir())
     s_db = DatabaseFactory.instance().secondary_databases()
 
     # create primary
@@ -386,7 +387,7 @@ def db_drop_all(cmd, value):
     #
     Config.instance().set_arg(Config.instance().env_key(), 'production')
     DatabaseFactory.instance().reset_config()
-    DatabaseFactory.instance().load_config(db_settings_dir())
+    DatabaseFactory.instance().load_config(configs_dir())
     s_db = DatabaseFactory.instance().secondary_databases()
 
     # create primary
@@ -407,7 +408,10 @@ def main():
     ConsoleLogger.instance()
 
     # Create and load database factory
-    DatabaseFactory.instance().load_config(db_settings_dir())
+    DatabaseFactory.instance().load_config(configs_dir())
+
+    # Create and load post-scripts
+    PostScripts.instance().load_config(configs_dir())
 
     # Create and load migration core
     MigrationCore.instance().load_migrations(db_migrations_dir())

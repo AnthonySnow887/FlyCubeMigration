@@ -1,0 +1,43 @@
+# configuration example
+default_dev_1: &default_dev_1
+  file-use-sort: false
+  file:
+#    - /home/user/roles/clear_database.sql
+#    - /home/user/roles/20_base_GRANTS.sql
+#    - /home/user/roles/10_base_USERS.sql
+  directory-recursive-load: false
+  directory:
+#    - /home/user/roles/
+#    - /home/user/roles_2/
+
+default_dev_2: &default_dev_2
+  file-use-sort: false
+#  file: /home/user/roles/clear_database.sql
+  directory-recursive-load: false
+#  directory: /home/user/roles/
+
+
+default_prod_1: &default_prod_1
+  file-use-sort: false
+  file:
+#    - /home/user/roles/clear_database.sql
+#    - /home/user/roles/20_base_GRANTS.sql
+#    - /home/user/roles/10_base_USERS.sql
+  directory-recursive-load: false
+  directory:
+#    - /home/user/roles/
+#    - /home/user/roles_2/
+
+default_prod_2: &default_prod_2
+  file-use-sort: false
+#  file: /home/user/roles/clear_database.sql
+  directory-recursive-load: false
+#  directory: /home/user/roles/
+
+
+# ENV sections
+production:
+  <<: *default_prod_1
+
+development:
+  <<: *default_dev_1
