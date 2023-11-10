@@ -1,3 +1,7 @@
+#
+# NOTE: Only '*.sql' files are loaded. Other files will be ignored.
+#
+
 # configuration example
 default_dev_1: &default_dev_1
   file-use-sort: false
