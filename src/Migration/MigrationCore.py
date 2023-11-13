@@ -9,6 +9,7 @@ from src.Migration.Migrators.BaseMigrator import BaseMigrator
 from src.Migration.Migrators.SQLiteMigrator import SQLiteMigrator
 from src.Migration.Migrators.PostgreSQLMigrator import PostgreSQLMigrator
 from src.Migration.Migrators.MySQLMigrator import MySQLMigrator
+from src.PostScripts.PostScripts import PostScripts
 
 
 class MigrationCore:
@@ -115,6 +116,7 @@ class MigrationCore:
 
         print(f"[MigrationsCore] Start migrate from {current_version}:")
         new_version = -1
+        changed_databases = []
         for k, m in mirgations.items():
             # configuration current migration
             m.configuration()
@@ -173,6 +175,11 @@ class MigrationCore:
             if not m.migrate(version, migrator_name):
                 print(f"[{ConsoleLogger.instance().make_color_string(m_command.capitalize() + ' - FAILED', 'error')}][DB: {m_database_title}] Migrate {msg_attr} ({m_version} - '{m_class_name}')")
                 break
+
+            # save changed database
+            if not m_database in changed_databases:
+                changed_databases.append(m_database)
+
             new_version = m_version
             if m_command == "up":
                 self.__append_migration_version(m_database, new_version)
@@ -183,6 +190,9 @@ class MigrationCore:
         # select current migration version from database
         current_version = self.__current_migration_version(db_names)
         print(f"[MigrationsCore] Current migration version: {current_version}")
+
+        # Execute post-scripts
+        self.__execute_all_post_scripts(changed_databases)
 
     def rollback(self, db_names: list, step: int = 1):
         """Метод отката миграции
@@ -211,6 +221,7 @@ class MigrationCore:
         mirgations = Helper.sort(self.__migrations, True)
         print(f"[MigrationsCore] Start rollback from {current_version}:")
         new_version = -1
+        changed_databases = []
         for k, m in mirgations.items():
             # configuration current migration
             m.configuration()
@@ -254,6 +265,11 @@ class MigrationCore:
                 print(
                     f"[{ConsoleLogger.instance().make_color_string('Down - FAILED', 'error')}][DB: {m_database_title}] Migrate from ({m_version} - '{m_class_name}')")
                 break
+
+            # save changed database
+            if not m_database in changed_databases:
+                changed_databases.append(m_database)
+
             new_version = m_version
             self.__remove_migration_version(m_database, new_version)
             step -= 1
@@ -262,6 +278,9 @@ class MigrationCore:
         # select current migration version from database
         current_version = self.__current_migration_version(db_names)
         print(f"[MigrationsCore] Current migration version: {current_version}")
+
+        # Execute post-scripts
+        self.__execute_all_post_scripts(changed_databases)
 
     def migrate_redo(self, db_names: list, step: int = 1):
         """Метод перустановки миграции
@@ -616,3 +635,59 @@ class MigrationCore:
         ConsoleLogger.instance().set_show_out(False)
         db_adapter.query(f"DELETE FROM schema_migrations WHERE version = '{version}';")
         ConsoleLogger.instance().set_show_out(show_out)
+
+    def __execute_all_post_scripts(self, databases: list):
+        """Установить все SQL post-скрипты на все измененные базы данных
+
+        :param databases: список измененных бах данных
+        :return:
+        """
+
+        # Execute post-scripts
+        print("[MigrationsCore] Execute post-scripts:")
+        post_scripts = PostScripts.instance().post_scripts()
+        if len(post_scripts) == 0:
+            print(f"[{ConsoleLogger.instance().make_color_string('Skip', 'info')}] List of post-scripts is Empty.")
+        elif len(databases) == 0:
+            print(f"[{ConsoleLogger.instance().make_color_string('Skip', 'info')}] List of changed databases is Empty.")
+        else:
+            is_ok = True
+            for f in post_scripts:
+                for db in databases:
+                    db_title = str(db)
+                    if db_title == "":
+                        db_title = 'primary'
+
+                    print(f"[{ConsoleLogger.instance().make_color_string('Install', 'ok')}][DB: {db_title}] Post-script: {f}")
+                    is_ok = self.__execute_post_script("", f)
+                    if not is_ok:
+                        print(f"[{ConsoleLogger.instance().make_color_string('Install' + ' - FAILED', 'error')}][DB: {db_title}] Post-script: {f}")
+                        break
+                if not is_ok:
+                    break
+
+        print("[MigrationsCore] Finish execute post-scripts")
+
+    def __execute_post_script(self, db_name: str, post_script_path: str) -> bool:
+        """Установить SQL post-скрипт
+
+        :param db_name: имя базы данных
+        :param post_script_path: путь до post-скрипта
+        :return:
+        """
+
+        db_adapter = DatabaseFactory.instance().create_database_adapter({'database': db_name})
+        if not db_adapter:
+            return False
+        db_adapter.begin_transaction()
+        try:
+            db_adapter.query(PostScripts.instance().read_post_script(post_script_path))
+            result = db_adapter.commit_transaction()
+        except Exception as err:
+            print(ConsoleLogger.instance().make_color_string(f"[MigrationsCore] Execute post-script failed! Error: {err}",
+                                                             'error'))
+            db_adapter.rollback_transaction()
+            result = False
+
+        db_adapter.disconnect()
+        return result

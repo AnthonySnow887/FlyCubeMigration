@@ -143,12 +143,12 @@ class PostScripts:
         # load only dir files
         if not recursive:
             for f in os.listdir(dir_path):
-                if not os.path.isfile(f):
+                if os.path.isdir(f):
                     continue
                 file_extension = Helper.file_extension(f)
                 if not file_extension.lower() == ".sql":
                     continue
-                found_files.append(f)
+                found_files.append(os.path.join(dir_path, f))
         else:
             # load dir files recursive
             for address, dirs, files in os.walk(dir_path):

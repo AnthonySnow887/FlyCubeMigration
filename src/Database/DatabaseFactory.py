@@ -115,7 +115,7 @@ class DatabaseFactory:
         NOTE: If database name is empty - used primary database.
         """
 
-        if len(self.__settings) == 0 and len(self.__secondarySettings):
+        if len(self.__settings) == 0 and len(self.__secondarySettings) == 0:
             return None
         database = args.get('database', '')
         if not isinstance(database, str):

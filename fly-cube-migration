@@ -18,24 +18,26 @@ from src.Database.DatabaseFactory import DatabaseFactory
 from src.Migration.MigrationCore import MigrationCore
 from src.Settings.Settings import Settings
 from src.PostScripts.PostScripts import PostScripts
+from src.TemplateCompiler.TemplateCompiler import TemplateCompiler
+from src.TemplateCompiler.TCHelperFunction import TCHelperFunction
 
-version = "1.0.2"
+version = "1.1.0"
 url_fly_cube_migration_latest = "https://api.github.com/repos/AnthonySnow887/FlyCubeMigration/releases/latest"
 
 
 def settings_dir() -> str:
     # Get settings
     s = Settings('FlyCubeMigration')
-    return s.value('config-dir', os.path.dirname(os.path.realpath(__file__)) + "/config")
+    return s.value('config-dir', '')
 
 
 def configs_dir() -> str:
-    tmp_dir = Config.instance().arg(Config.TAG_CONFIG_DIR, os.path.dirname(os.path.realpath(__file__)) + "/config")
+    tmp_dir = Config.instance().arg(Config.TAG_CONFIG_DIR, '')
     return Helper.splice_symbol_last(tmp_dir, '/')
 
 
 def db_migrations_dir() -> str:
-    tmp_dir = Config.instance().arg(Config.TAG_DB_MIGRATIONS_DIR, os.path.dirname(os.path.realpath(__file__)) + "/db/migrate")
+    tmp_dir = Config.instance().arg(Config.TAG_DB_MIGRATIONS_DIR, '')
     return Helper.splice_symbol_last(tmp_dir, '/')
 
 
@@ -53,6 +55,9 @@ def set_config_dir(cmd, value):
     # Re-Load migration core
     MigrationCore.instance().reset_migrations()
     MigrationCore.instance().load_migrations(db_migrations_dir())
+    # Re-Load post-scripts factory
+    PostScripts.instance().reset_config()
+    PostScripts.instance().load_config(configs_dir())
 
 
 def save_config_dir():
@@ -83,6 +88,17 @@ def show_settings():
     c_args = Config.instance().args()
     for k, v in c_args.items():
         print(f" - {k}: {v}")
+    print("")
+    print("=== FlyCubeMigration =========================")
+
+
+def show_post_scripts():
+    print("=== FlyCubeMigration =========================")
+    print("")
+    print(f"Loaded post-scripts:")
+    post_scripts = PostScripts.instance().post_scripts()
+    for f in post_scripts:
+        print(f" - {f}")
     print("")
     print("=== FlyCubeMigration =========================")
 
@@ -119,6 +135,65 @@ def set_show_output(cmd, value):
     ConsoleLogger.instance().set_show_out(tmp_value)
 
 
+def create_new_project(cmd, value):
+    m_name = Helper.to_camelcase(str(ConsoleHelper.application_argv_value('--name', '')))
+    if m_name == '':
+        print("Name is Empty!")
+        return
+    now = datetime.now()
+    now.strftime("%d/%m/%Y %H:%M:%S")
+    # check project def dir
+    m_dir = f"/home/{Helper.current_user()}/FlyCubeMigrationProjects"
+    if not os.path.exists(m_dir):
+        os.mkdir(m_dir)
+
+    # check project dir
+    m_dir = f"/home/{Helper.current_user()}/FlyCubeMigrationProjects/{m_name.capitalize()}"
+    if os.path.exists(m_dir):
+        print("Project directory already exist!")
+        return
+    # create project files
+    print("=== FlyCubeMigration =========================")
+    os.mkdir(m_dir)
+    print(f"[Created] {m_dir}")
+
+    os.mkdir(f"{m_dir}/config")
+    print(f"[Created] {m_dir}/config")
+
+    os.mkdir(f"{m_dir}/db")
+    print(f"[Created] {m_dir}/db")
+
+    os.mkdir(f"{m_dir}/db/migrate")
+    print(f"[Created] {m_dir}/db/migrate")
+
+    os.mkdir(f"{m_dir}/post_scripts")
+    print(f"[Created] {m_dir}/post_scripts")
+
+    tc = TemplateCompiler()
+    tc.append_help_param('CURRENT_USER', Helper.current_user())
+    tc.append_help_param('CURRENT_DATE', now.strftime("%d.%m.%Y"))
+    tc.append_help_param('CURRENT_TIME', now.strftime("%H:%M"))
+    tc.append_help_param('PROJECT_PATH', m_dir)
+
+    # - 1 -
+    m_data = tc.compile(Helper.read_file(os.path.dirname(os.path.realpath(__file__)) + "/templates/fly-cube-migration.yml.tmpl"))
+    with open(f"{m_dir}/config/fly-cube-migration.yml", 'w') as f:
+        f.write(m_data)
+        print(f"[Created] {m_dir}/config/fly-cube-migration.yml")
+    # - 2 -
+    m_data = tc.compile(Helper.read_file(os.path.dirname(os.path.realpath(__file__)) + "/templates/database.yml.tmpl"))
+    with open(f"{m_dir}/config/database.yml", 'w') as f:
+        f.write(m_data)
+        print(f"[Created] {m_dir}/config/database.yml")
+    # - 3 -
+    m_data = tc.compile(Helper.read_file(os.path.dirname(os.path.realpath(__file__)) + "/templates/post-scripts.yml.tmpl"))
+    with open(f"{m_dir}/config/post-scripts.yml", 'w') as f:
+        f.write(m_data)
+        print(f"[Created] {m_dir}/config/post-scripts.yml")
+
+    print("=== FlyCubeMigration =========================")
+
+
 def create_migration(cmd, value):
     m_name = Helper.to_camelcase(str(ConsoleHelper.application_argv_value('--name', '')))
     if m_name == '':
@@ -135,35 +210,14 @@ def create_migration(cmd, value):
     # create migration
     m_path = f"{m_dir}/{cut_time}_{m_name}.py"
     print("=== FlyCubeMigration: Create new migration ===")
+    tc = TemplateCompiler()
+    tc.append_help_param('CURRENT_USER', Helper.current_user())
+    tc.append_help_param('CURRENT_DATE', now.strftime("%d.%m.%Y"))
+    tc.append_help_param('CURRENT_TIME', now.strftime("%H:%M"))
+    tc.append_help_param('MIGRATION_NAME', m_name)
+    m_data = tc.compile(Helper.read_file(os.path.dirname(os.path.realpath(__file__)) + "/templates/migration.py.tmpl"))
     with open(m_path, 'w') as f:
-        f.write(f'''
-#
-# Created by FlyCubeMigration generator.
-# User: {Helper.current_user()}
-# Date: {now.strftime("%d.%m.%Y")}
-# Time: {now.strftime("%H:%M")}
-#
-
-from src.Migration.BaseMigration import BaseMigration
-
-
-class {m_name}(BaseMigration):
-    #
-    # NOTE: Uncomment if needed configure migration.
-    #
-    # def configuration(self):
-    #     # Set here your code for configuration migration
-    #     return
-
-    def up(self):
-        # Set here your code for install migration
-        return
-
-    def down(self):
-        # Set here your code for uninstall migration
-        return
-
-        ''')
+        f.write(m_data)
 
     print(f"[Created] {m_path}")
     print("=== FlyCubeMigration =========================")
@@ -473,6 +527,19 @@ def main():
         'command': '--settings',
         'description': 'Show current FlyCubeMigration config settings',
         'primary': True
+    })
+    # --post-scripts
+    ConsoleHelper.instance().append_helper(show_post_scripts, {
+        'command': '--post-scripts',
+        'description': 'Show loaded post-scripts',
+        'has_exit': True
+    })
+
+    # --new-project
+    ConsoleHelper.instance().append_helper(create_new_project, {
+        'command': '--new-project',
+        'description': 'Create new FlyCubeMigration project',
+        'group': '--new-project'
     })
 
     # --new-migration
@@ -815,6 +882,8 @@ def main():
                                             f"{ConsoleHelper.application_file()} --env=production [Other Commands]")
     ConsoleHelper.instance().append_example('Show sql output (\'--output\' is grouped with all the commands listed below)',
                                             f"{ConsoleHelper.application_file()} --output=true [Other Commands]")
+    ConsoleHelper.instance().append_example('Create new FlyCubeMigration project',
+                                            f"{ConsoleHelper.application_file()} --new-project --name=ExampleProject")
     ConsoleHelper.instance().append_example('Create new migration',
                                             f"{ConsoleHelper.application_file()} --new-migration --name=ExampleMigration")
     ConsoleHelper.instance().append_example('Select database migration version',

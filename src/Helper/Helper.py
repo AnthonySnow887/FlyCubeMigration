@@ -25,6 +25,21 @@ class Helper:
         return split_tup[len(split_tup) - 1]
 
     @staticmethod
+    def read_file(path: str) -> str:
+        """Прочитать содержимое файла
+
+        :param path: путь до файла
+        :return:
+        """
+
+        with open(path, "r") as f:
+            lines = f.readlines()
+        tmp = ""
+        for line in lines:
+            tmp += line
+        return tmp
+
+    @staticmethod
     def sort(data: dict, desc: bool = False) -> dict:
         """Метод сортировки массива
 
