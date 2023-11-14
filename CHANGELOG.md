@@ -1,3 +1,10 @@
+# 1.1.0 (??.11.2023)
+
+ * Added support for creating FlyCubeMigration projects
+ * Added support for POST-scripts
+ * Minor improvements and code refactorings
+ * Updated files for build RPM/DEB packages
+
 # 1.0.2 (26.10.2023)
 
  * Fix fly-cube-migration main (abspath -> realpath)

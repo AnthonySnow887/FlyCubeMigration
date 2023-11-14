@@ -1,3 +1,11 @@
+fly-cube-migration (1.1.0-1) stable; urgency=low
+
+  * Version 1.1.0
+
+
+ -- AnthonySnow887 <AnthonySnow887@build>  Tue, 14 Nov 2023 15:22:00 +0300
+
+
 fly-cube-migration (1.0.2-2) stable; urgency=low
 
   * First version build for Ubuntu

@@ -11,6 +11,13 @@ implemented in the MVC Web Framework FlyCubePHP.
 Installation of each migration is performed in transactional mode and in case of errors, 
 rolls back the state of the database to the stage before installation.
 
+Starting from version 1.1.0, support for POST-scripts has been added, which will be executed every time migrations are installed/reinstalled/deleted.
+POST-scripts allow you to automate routine actions required after completing the steps described above.
+POST-scripts are standard SQL scripts located in one or more directories and containing commands common to all migrations.
+
+Installation of POST-scripts is performed in transaction mode for all modified databases and in case of errors
+rolls back the database state to the installation stage of the POST-script that caused the error.
+
 Supported databases
 -------------------
 
@@ -75,6 +82,10 @@ Options include:
   --settings             Show current FlyCubeMigration config settings 
 
 
+  --post-scripts         Show loaded post-scripts 
+
+  --new-project          Create new FlyCubeMigration project 
+
   --new-migration        Create new migration 
 
   --db-create            Create all databases for current environment 
@@ -98,6 +109,7 @@ Options include:
   --to-version=[VALUE]   Set needed migration version (optional; if 0 - uninstall all migrations) 
   --step=[VALUE]         Set needed number of steps for uninstall (re-install) migrations (optional; default: 1) 
 
+
 Examples:
 
  1. Set FlyCubeMigration config directory ('--config-dir' is grouped with all the commands listed below):
@@ -109,38 +121,60 @@ Examples:
  3. Show sql output ('--output' is grouped with all the commands listed below):
      ./fly-cube-migration --output=true [Other Commands]
 
- 4. Create new migration:
+ 4. Create new FlyCubeMigration project:
+     ./fly-cube-migration --new-project --name=ExampleProject
+
+ 5. Create new migration:
      ./fly-cube-migration --new-migration --name=ExampleMigration
 
- 5. Select database migration version:
+ 6. Select database migration version:
      ./fly-cube-migration --db-version
 
- 6. Select database migrations status:
+ 7. Select database migrations status:
      ./fly-cube-migration --db-migrate-status
 
- 7. Install all migrations:
+ 8. Install all migrations:
      ./fly-cube-migration --db-migrate
 
- 8. Install needed migrations:
+ 9. Install needed migrations:
      ./fly-cube-migration --db-migrate --to-version=20210309092620
 
- 9. Uninstall last migration:
+10. Uninstall last migration:
      ./fly-cube-migration --db-rollback
 
-10. Uninstall last N-steps migrations:
+11. Uninstall last N-steps migrations:
      ./fly-cube-migration --db-rollback --step=3
 
-11. Uninstall all migrations (ver. 1):
+12. Uninstall all migrations (ver. 1):
      ./fly-cube-migration --db-rollback-all
 
-12. Uninstall all migrations (ver. 2):
+13. Uninstall all migrations (ver. 2):
      ./fly-cube-migration --db-migrate --to-version=0
 
-13. Re-Install last migration:
+14. Re-Install last migration:
      ./fly-cube-migration --db-migrate-redo
 
-14. Re-Install last N-steps migrations:
+15. Re-Install last N-steps migrations:
      ./fly-cube-migration --db-migrate-redo --step=3
+```
+
+Quick start
+-----------
+
+To get started with FlyCubeMigration, create a new project with the command:
+```bash
+$> ./fly-cube-migration --new-project --name=MyProject
+
+=== FlyCubeMigration =========================
+[Created] /home/user/FlyCubeMigrationProjects/Myproject
+[Created] /home/user/FlyCubeMigrationProjects/Myproject/config
+[Created] /home/user/FlyCubeMigrationProjects/Myproject/db
+[Created] /home/user/FlyCubeMigrationProjects/Myproject/db/migrate
+[Created] /home/user/FlyCubeMigrationProjects/Myproject/post_scripts
+[Created] /home/user/FlyCubeMigrationProjects/Myproject/config/fly-cube-migration.yml
+[Created] /home/user/FlyCubeMigrationProjects/Myproject/config/database.yml
+[Created] /home/user/FlyCubeMigrationProjects/Myproject/config/post-scripts.yml
+=== FlyCubeMigration =========================
 ```
 
 FlyCubeMigration configure file
@@ -196,7 +230,7 @@ $> ./fly-cube-migration --settings
 
 Config file: /home/user/Projects/FlyCubeMigration/config/fly-cube-migration.yml
 Values:
- - FLY_CUBE_MIGRATION_DB_CONFIG_DIR: config/
+ - FLY_CUBE_MIGRATION_CONFIG_DIR: config/
  - FLY_CUBE_MIGRATION_DB_MIGRATIONS_DIR: db/migrate/
 
 === FlyCubeMigration =========================
@@ -205,9 +239,9 @@ Values:
 Default config file example:
 ```yaml
 #
-# Directory for database config file 'database.yml'
+# Directory for config files: 'fly-cube-migration.yml', 'database.yml' and 'post-scripts.yml'
 #
-FLY_CUBE_MIGRATION_DB_CONFIG_DIR: "config/"
+FLY_CUBE_MIGRATION_CONFIG_DIR: "config/"
 
 #
 # Directory for database migration files
@@ -237,9 +271,9 @@ Secondary settings:
 If you want to use another directory, then set the full path to it in the FlyCubeMigration configuration file:
 ```yaml
 #
-# Directory for database config file 'database.yml'
+# Directory for config files: 'fly-cube-migration.yml', 'database.yml' and 'post-scripts.yml'
 #
-FLY_CUBE_MIGRATION_DB_CONFIG_DIR: "/home/user/test/config/"
+FLY_CUBE_MIGRATION_CONFIG_DIR: "/home/user/test/config/"
 ```
 
 Default config file example:
@@ -334,6 +368,97 @@ development_secondary:
 #  test: *default_postgresql_dev
 #  test-2: *default_postgresql_unix_dev
 ```
+
+POST-script configure file
+--------------------------
+
+POST-scripts are standard SQL scripts located in one or more directories and containing commands common to all migrations.
+POST-scripts allow you to automate routine actions required after installing/reinstalling/uninstalling migrations.
+An example of the actions of POST-scripts is:
+  - setting grants on tables/views/database functions
+  - setting/changing the owner of tables
+  - and so on
+
+Installation of POST-scripts is performed in transaction mode for all modified databases and in case of errors
+rolls back the database state to the installation stage of the POST-script that caused the error.
+
+>
+> NOTE: POST-scripts are only executed for the following commands:
+>  - --db-migrate
+>  - --db-migrate-redo
+>  - --db-rollback
+>  - --db-rollback-all
+>
+
+By default, the POST-scripts configuration file is located in the ```config/``` directory and its name must match ```post-scripts.yml```.
+Full path to the file: ```config/post-scripts.yml```
+
+This file can contain an unlimited number of settings to describe the location of SQL scripts,
+but the fields "production", "development" can only be specified once.
+
+These fields indicate to the system kernel which section of the settings should be used in which mode of operation of the application.
+
+If you want to use another directory, then set the full path to it in the FlyCubeMigration configuration file:
+```yaml
+#
+# Directory for config files: 'fly-cube-migration.yml', 'database.yml' and 'post-scripts.yml'
+#
+FLY_CUBE_MIGRATION_CONFIG_DIR: "/home/user/test/config/"
+```
+
+Default config file example:
+```yaml
+#
+# NOTE: Only '*.sql' files are loaded. Other files will be ignored.
+#
+
+# configuration example
+default_dev: &default_dev
+  file-use-sort: false
+  file:
+#    - /home/user/FlyCubeMigrationProjects/Myproject/post_scripts/00.sql
+#    - /home/user/FlyCubeMigrationProjects/Myproject/post_scripts/10.sql
+  directory-recursive-load: false
+  directory:
+#    - /home/user/FlyCubeMigrationProjects/Myproject/post_scripts/
+
+default_dev_2: &default_dev_2
+  file-use-sort: false
+#  file: /home/user/FlyCubeMigrationProjects/Myproject/post_scripts/00.sql
+  directory-recursive-load: false
+#  directory: /home/user/FlyCubeMigrationProjects/Myproject/post_scripts/
+
+
+default_prod: &default_prod
+  file-use-sort: false
+  file:
+#    - /home/user/FlyCubeMigrationProjects/Myproject/post_scripts/00.sql
+#    - /home/user/FlyCubeMigrationProjects/Myproject/post_scripts/10.sql
+  directory-recursive-load: false
+  directory:
+#    - /home/user/FlyCubeMigrationProjects/Myproject/post_scripts/
+
+default_prod_2: &default_prod_2
+  file-use-sort: false
+#  file: /home/user/FlyCubeMigrationProjects/Myproject/post_scripts/00.sql
+  directory-recursive-load: false
+#  directory: /home/user/FlyCubeMigrationProjects/Myproject/post_scripts/
+
+
+# ENV sections
+production:
+  <<: *default_prod
+
+development:
+  <<: *default_dev
+```
+
+Description of the fields of the configuration file:
+  - [bool] file-use-sort            - use direct sorting by the name of SQL scripts specified in the ```file``` section
+  - [str|list] file                 - contains the path/list of paths to SQL scripts
+  - [bool] directory-recursive-load - use recursive loading of directories specified in the ```directory``` section
+  - [str|list] directory            - contains the path/list of paths to directories with SQL scripts
+
 
 Migration description
 ---------------------
@@ -1089,6 +1214,9 @@ Env type: Development
 [Up][DB: primary] Migrate to (20221216171748 - 'AddForeignKeyPKey')
 [MigrationsCore] Finish migrate
 [MigrationsCore] Current migration version: 20221216171748
+[MigrationsCore] Execute post-scripts:
+[Skip] List of post-scripts is Empty.
+[MigrationsCore] Finish execute post-scripts
 
 === FlyCubeMigration =====================
 ```
@@ -1106,6 +1234,9 @@ Env type: Development
 [Down][DB: primary] Migrate from (20221216171748 - 'AddForeignKeyPKey')
 [MigrationsCore] Finish rollback
 [MigrationsCore] Current migration version: 20221216171105
+[MigrationsCore] Execute post-scripts:
+[Skip] List of post-scripts is Empty.
+[MigrationsCore] Finish execute post-scripts
 
 === FlyCubeMigration =====================
 ```
@@ -1137,6 +1268,9 @@ Env type: Development
 [Down][DB: primary] Migrate from (20221216161952 - 'CreateExtension')
 [MigrationsCore] Finish rollback
 [MigrationsCore] Current migration version: 0
+[MigrationsCore] Execute post-scripts:
+[Skip] List of post-scripts is Empty.
+[MigrationsCore] Finish execute post-scripts
 
 === FlyCubeMigration =====================
 ```

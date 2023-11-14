@@ -19,10 +19,23 @@ from src.Migration.MigrationCore import MigrationCore
 from src.Settings.Settings import Settings
 from src.PostScripts.PostScripts import PostScripts
 from src.TemplateCompiler.TemplateCompiler import TemplateCompiler
-from src.TemplateCompiler.TCHelperFunction import TCHelperFunction
 
 version = "1.1.0"
 url_fly_cube_migration_latest = "https://api.github.com/repos/AnthonySnow887/FlyCubeMigration/releases/latest"
+
+
+def init_core():
+    # Create config
+    Config.instance().load_config(settings_dir())
+
+    # Create and load database factory
+    DatabaseFactory.instance().load_config(configs_dir())
+
+    # Create and load post-scripts
+    PostScripts.instance().load_config(configs_dir())
+
+    # Create and load migration core
+    MigrationCore.instance().load_migrations(db_migrations_dir())
 
 
 def settings_dir() -> str:
@@ -81,6 +94,9 @@ def clear_config_dir():
 
 
 def show_settings():
+    # init core
+    init_core()
+    # run command
     print("=== FlyCubeMigration =========================")
     print("")
     print(f"Config file: {Config.instance().config_file_path()}")
@@ -93,6 +109,9 @@ def show_settings():
 
 
 def show_post_scripts():
+    # init core
+    init_core()
+    # run command
     print("=== FlyCubeMigration =========================")
     print("")
     print(f"Loaded post-scripts:")
@@ -124,6 +143,9 @@ def show_latest_version():
 
 
 def set_env(cmd, value):
+    # init core
+    init_core()
+    # run command
     Config.instance().set_arg(Config.instance().env_key(), value)
     # reload database factory config
     DatabaseFactory.instance().reset_config()
@@ -136,6 +158,7 @@ def set_show_output(cmd, value):
 
 
 def create_new_project(cmd, value):
+    # run command
     m_name = Helper.to_camelcase(str(ConsoleHelper.application_argv_value('--name', '')))
     if m_name == '':
         print("Name is Empty!")
@@ -195,6 +218,9 @@ def create_new_project(cmd, value):
 
 
 def create_migration(cmd, value):
+    # init core
+    init_core()
+    # run command
     m_name = Helper.to_camelcase(str(ConsoleHelper.application_argv_value('--name', '')))
     if m_name == '':
         print("Name is Empty!")
@@ -224,6 +250,9 @@ def create_migration(cmd, value):
 
 
 def db_version(cmd, value):
+    # init core
+    init_core()
+    # run command
     db_names = []
     result = re.search('^--db-version-(.*)$', cmd)
     if not result:
@@ -243,6 +272,9 @@ def db_version(cmd, value):
 
 
 def db_migrate_status(cmd, value):
+    # init core
+    init_core()
+    # run command
     db_names = []
     result = re.search('^--db-migrate-status-(.*)$', cmd)
     if not result:
@@ -262,6 +294,9 @@ def db_migrate_status(cmd, value):
 
 
 def db_migrate(cmd, value):
+    # init core
+    init_core()
+    # run command
     db_names = []
     result = re.search('^--db-migrate-(.*)$', cmd)
     if not result:
@@ -282,6 +317,9 @@ def db_migrate(cmd, value):
 
 
 def db_migrate_redo(cmd, value):
+    # init core
+    init_core()
+    # run command
     db_names = []
     result = re.search('^--db-migrate-redo-(.*)$', cmd)
     if not result:
@@ -302,6 +340,9 @@ def db_migrate_redo(cmd, value):
 
 
 def db_rollback(cmd, value):
+    # init core
+    init_core()
+    # run command
     db_names = []
     result = re.search('^--db-rollback-(.*)$', cmd)
     if not result:
@@ -322,6 +363,9 @@ def db_rollback(cmd, value):
 
 
 def db_rollback_all(cmd, value):
+    # init core
+    init_core()
+    # run command
     s_db = DatabaseFactory.instance().secondary_databases()
     db_names = [''] + s_db
 
@@ -333,6 +377,9 @@ def db_rollback_all(cmd, value):
 
 
 def db_create(cmd, value):
+    # init core
+    init_core()
+    # run command
     s_db = DatabaseFactory.instance().secondary_databases()
     db_name = ''
     result = re.search('^--db-create-(.*)$', cmd)
@@ -359,6 +406,9 @@ def db_create(cmd, value):
 
 
 def db_create_all(cmd, value):
+    # init core
+    init_core()
+    # run command
     print("=== FlyCubeMigration: Create all databases ===\r\n")
     print(f"Env type: {Config.instance().env_mode_str()}")
     #
@@ -394,6 +444,9 @@ def db_create_all(cmd, value):
 
 
 def db_drop(cmd, value):
+    # init core
+    init_core()
+    # run command
     s_db = DatabaseFactory.instance().secondary_databases()
     db_name = ''
     result = re.search('^--db-drop-(.*)$', cmd)
@@ -420,6 +473,9 @@ def db_drop(cmd, value):
 
 
 def db_drop_all(cmd, value):
+    # init core
+    init_core()
+    # run command
     print("=== FlyCubeMigration: Drop all databases ===\r\n")
     print(f"Env type: {Config.instance().env_mode_str()}")
     #
@@ -455,20 +511,8 @@ def db_drop_all(cmd, value):
 
 
 def main():
-    # Create config
-    Config.instance().load_config(settings_dir())
-
     # Create console logger
     ConsoleLogger.instance()
-
-    # Create and load database factory
-    DatabaseFactory.instance().load_config(configs_dir())
-
-    # Create and load post-scripts
-    PostScripts.instance().load_config(configs_dir())
-
-    # Create and load migration core
-    MigrationCore.instance().load_migrations(db_migrations_dir())
 
     # Init console helper
 

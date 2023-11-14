@@ -5,7 +5,7 @@ AutoReq: no
 
 
 Name:       fly-cube-migration
-Version: 	1.0.2
+Version: 	1.1.0
 Release: 	1
 Group:      Development/Python
 Packager: 	AnthonySnow887
