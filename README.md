@@ -168,14 +168,14 @@ To get started with FlyCubeMigration, create a new project with the command:
 $> ./fly-cube-migration --new-project --name=MyProject
 
 === FlyCubeMigration =========================
-[Created] /home/user/FlyCubeMigrationProjects/Myproject
-[Created] /home/user/FlyCubeMigrationProjects/Myproject/config
-[Created] /home/user/FlyCubeMigrationProjects/Myproject/db
-[Created] /home/user/FlyCubeMigrationProjects/Myproject/db/migrate
-[Created] /home/user/FlyCubeMigrationProjects/Myproject/post_scripts
-[Created] /home/user/FlyCubeMigrationProjects/Myproject/config/fly-cube-migration.yml
-[Created] /home/user/FlyCubeMigrationProjects/Myproject/config/database.yml
-[Created] /home/user/FlyCubeMigrationProjects/Myproject/config/post-scripts.yml
+[Created] /home/user/FlyCubeMigrationProjects/MyProject
+[Created] /home/user/FlyCubeMigrationProjects/MyProject/config
+[Created] /home/user/FlyCubeMigrationProjects/MyProject/db
+[Created] /home/user/FlyCubeMigrationProjects/MyProject/db/migrate
+[Created] /home/user/FlyCubeMigrationProjects/MyProject/post_scripts
+[Created] /home/user/FlyCubeMigrationProjects/MyProject/config/fly-cube-migration.yml
+[Created] /home/user/FlyCubeMigrationProjects/MyProject/config/database.yml
+[Created] /home/user/FlyCubeMigrationProjects/MyProject/config/post-scripts.yml
 === FlyCubeMigration =========================
 ```
 
