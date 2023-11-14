@@ -10,7 +10,7 @@ class Config:
     __config_file = "fly-cube-migration.yml"
     __config_file_path = ""
 
-    TAG_DB_CONFIG_DIR = "FLY_CUBE_MIGRATION_DB_CONFIG_DIR"
+    TAG_CONFIG_DIR = "FLY_CUBE_MIGRATION_CONFIG_DIR"
     TAG_DB_MIGRATIONS_DIR = "FLY_CUBE_MIGRATION_DB_MIGRATIONS_DIR"
 
     @staticmethod

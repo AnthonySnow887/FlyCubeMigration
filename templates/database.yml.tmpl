@@ -1,11 +1,18 @@
+#
+# Created by FlyCubeMigration generator.
+# User: {{ CURRENT_USER }}
+# Date: {{ CURRENT_DATE }}
+# Time: {{ CURRENT_TIME }}
+#
+
 # SQLite configuration example
 default_sqlite_dev: &default_sqlite_dev
   adapter: sqlite
-  database: db/fly_cube_dev.sqlite3
+  database: {{ PROJECT_PATH }}/db/fly_cube_dev.sqlite3
 
 default_sqlite_prod: &default_sqlite_prod
   adapter: sqlite
-  database: db/fly_cube_prod.sqlite3
+  database: {{ PROJECT_PATH }}/db/fly_cube_prod.sqlite3
 
 # PostgreSQL TCP configuration example
 default_postgresql_dev: &default_postgresql_dev

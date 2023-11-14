@@ -1,3 +1,11 @@
+# 1.1.0 (14.11.2023)
+
+ * Added support for creating FlyCubeMigration projects
+ * Added support for POST-scripts
+ * Added command ```--make-migration-number``` for create and output new migration version number
+ * Minor improvements and code refactorings
+ * Updated files for build RPM/DEB packages
+
 # 1.0.2 (26.10.2023)
 
  * Fix fly-cube-migration main (abspath -> realpath)

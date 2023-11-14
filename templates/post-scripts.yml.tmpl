@@ -1,0 +1,50 @@
+#
+# Created by FlyCubeMigration generator.
+# User: {{ CURRENT_USER }}
+# Date: {{ CURRENT_DATE }}
+# Time: {{ CURRENT_TIME }}
+#
+
+#
+# NOTE: Only '*.sql' files are loaded. Other files will be ignored.
+#
+
+# configuration example
+default_dev: &default_dev
+  file-use-sort: false
+  file:
+#    - {{ PROJECT_PATH }}/post_scripts/00.sql
+#    - {{ PROJECT_PATH }}/post_scripts/10.sql
+  directory-recursive-load: false
+  directory:
+#    - {{ PROJECT_PATH }}/post_scripts/
+
+#default_dev_2: &default_dev_2
+#  file-use-sort: false
+##  file: {{ PROJECT_PATH }}/post_scripts/00.sql
+#  directory-recursive-load: false
+##  directory: {{ PROJECT_PATH }}/post_scripts/
+
+
+default_prod: &default_prod
+  file-use-sort: false
+  file:
+#    - {{ PROJECT_PATH }}/post_scripts/00.sql
+#    - {{ PROJECT_PATH }}/post_scripts/10.sql
+  directory-recursive-load: false
+  directory:
+#    - {{ PROJECT_PATH }}/post_scripts/
+
+#default_prod_2: &default_prod_2
+#  file-use-sort: false
+##  file: {{ PROJECT_PATH }}/post_scripts/00.sql
+#  directory-recursive-load: false
+##  directory: {{ PROJECT_PATH }}/post_scripts/
+
+
+# ENV sections
+production:
+  <<: *default_prod
+
+development:
+  <<: *default_dev
