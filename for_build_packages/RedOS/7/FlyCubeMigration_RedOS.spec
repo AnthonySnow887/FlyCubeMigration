@@ -33,8 +33,8 @@ Installation of each migration is performed in transactional mode and in case of
 
 %install
 mkdir -p %{buildroot}/usr/local/FlyCubeMigration/
-cp -r config %{buildroot}/usr/local/FlyCubeMigration/
-cp -r db %{buildroot}/usr/local/FlyCubeMigration/
+cp -r templates %{buildroot}/usr/local/FlyCubeMigration/
+cp -r for_build_packages %{buildroot}/usr/local/FlyCubeMigration/
 cp -r examples %{buildroot}/usr/local/FlyCubeMigration/
 cp -r src %{buildroot}/usr/local/FlyCubeMigration/
 cp -r *.* %{buildroot}/usr/local/FlyCubeMigration/
