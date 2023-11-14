@@ -171,7 +171,7 @@ def create_new_project(cmd, value):
         os.mkdir(m_dir)
 
     # check project dir
-    m_dir = f"/home/{Helper.current_user()}/FlyCubeMigrationProjects/{m_name.capitalize()}"
+    m_dir = f"/home/{Helper.current_user()}/FlyCubeMigrationProjects/{m_name}"
     if os.path.exists(m_dir):
         print("Project directory already exist!")
         return
