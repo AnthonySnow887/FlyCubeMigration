@@ -249,6 +249,15 @@ def create_migration(cmd, value):
     print("=== FlyCubeMigration =========================")
 
 
+def make_migration_number(cmd, value):
+    now = datetime.now()
+    now.strftime("%d/%m/%Y %H:%M:%S")
+    cut_time = now.strftime("%Y%m%d%H%M%S")
+    print("=== FlyCubeMigration: Make migration number ===")
+    print(f"{cut_time}")
+    print("=== FlyCubeMigration ==========================")
+
+
 def db_version(cmd, value):
     # init core
     init_core()
@@ -591,6 +600,13 @@ def main():
         'command': '--new-migration',
         'description': 'Create new migration',
         'group': '--new-migration'
+    })
+
+    # --make-migration-number
+    ConsoleHelper.instance().append_helper(make_migration_number, {
+        'command': '--make-migration-number',
+        'description': 'Create and output new migration version number',
+        'group': '--make-migration-number'
     })
 
     #

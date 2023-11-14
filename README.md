@@ -71,43 +71,45 @@ Usage: ./fly-cube-migration [options]
 
 Options include:
 
-  --help                 Show help [-h, -?]
-  --version              Print the version [-v]
-  --latest-version       Select latest version from GitHub [-lv]
-  --env=[VALUE]          Set current environment (production/development; default: development) 
-  --output=[VALUE]       Show sql output (optional) (default: false) 
-  --config-dir=[VALUE]   Set FlyCubeMigration config file directory (optional) (default: 'config/') 
-  --save-config-dir      Save in settings FlyCubeMigration config file directory 
-  --clear-config-dir     Clear from settings FlyCubeMigration config file directory 
-  --settings             Show current FlyCubeMigration config settings 
+  --help                    Show help [-h, -?]
+  --version                 Print the version [-v]
+  --latest-version          Select latest version from GitHub [-lv]
+  --env=[VALUE]             Set current environment (production/development; default: development) 
+  --output=[VALUE]          Show sql output (optional) (default: false) 
+  --config-dir=[VALUE]      Set FlyCubeMigration config file directory (optional) (default: 'config/') 
+  --save-config-dir         Save in settings FlyCubeMigration config file directory 
+  --clear-config-dir        Clear from settings FlyCubeMigration config file directory 
+  --settings                Show current FlyCubeMigration config settings 
 
 
-  --post-scripts         Show loaded post-scripts 
+  --post-scripts            Show loaded post-scripts 
 
-  --new-project          Create new FlyCubeMigration project 
+  --new-project             Create new FlyCubeMigration project 
 
-  --new-migration        Create new migration 
+  --new-migration           Create new migration 
 
-  --db-create            Create all databases for current environment 
-  --db-create-all        Create all databases for all environments (development and production) 
+  --make-migration-number   Create and output new migration version number 
 
-  --db-drop              Drop all databases for current environment 
-  --db-drop-all          Drop all databases for all environments (development and production) 
+  --db-create               Create all databases for current environment 
+  --db-create-all           Create all databases for all environments (development and production) 
 
-  --db-migrate           Start all database(s) migrations 
+  --db-drop                 Drop all databases for current environment 
+  --db-drop-all             Drop all databases for all environments (development and production) 
 
-  --db-migrate-redo      Start re-install last database migration 
+  --db-migrate              Start all database(s) migrations 
 
-  --db-migrate-status    Select migrations status 
+  --db-migrate-redo         Start re-install last database migration 
 
-  --db-rollback          Start uninstall last database migration 
-  --db-rollback-all      Start uninstall all database(s) migrations 
+  --db-migrate-status       Select migrations status 
 
-  --db-version           Select database(s) migration version 
+  --db-rollback             Start uninstall last database migration 
+  --db-rollback-all         Start uninstall all database(s) migrations 
 
-  --name=[VALUE]         Set new object name 
-  --to-version=[VALUE]   Set needed migration version (optional; if 0 - uninstall all migrations) 
-  --step=[VALUE]         Set needed number of steps for uninstall (re-install) migrations (optional; default: 1) 
+  --db-version              Select database(s) migration version 
+
+  --name=[VALUE]            Set new object name 
+  --to-version=[VALUE]      Set needed migration version (optional; if 0 - uninstall all migrations) 
+  --step=[VALUE]            Set needed number of steps for uninstall (re-install) migrations (optional; default: 1) 
 
 
 Examples:
@@ -1273,4 +1275,15 @@ Env type: Development
 [MigrationsCore] Finish execute post-scripts
 
 === FlyCubeMigration =====================
+```
+
+Command: --make-migration-number
+--------------------------------
+
+```bash
+$> ./fly-cube-migration --make-migration-number
+
+=== FlyCubeMigration: Make migration number ===
+20231114171323
+=== FlyCubeMigration ==========================
 ```
