@@ -681,7 +681,7 @@ class MigrationCore:
             return False
         db_adapter.begin_transaction()
         try:
-            db_adapter.query(PostScripts.instance().read_post_script(post_script_path))
+            db_adapter.query(Helper.read_file(post_script_path))
             result = db_adapter.commit_transaction()
         except Exception as err:
             print(ConsoleLogger.instance().make_color_string(f"[MigrationsCore] Execute post-script failed! Error: {err}",
