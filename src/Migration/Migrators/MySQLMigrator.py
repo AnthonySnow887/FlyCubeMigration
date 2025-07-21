@@ -1,10 +1,12 @@
 import re
+from _thread import exit
+
 from src.Migration.Migrators.BaseMigrator import BaseMigrator
 
 
 class MySQLMigrator(BaseMigrator):
-    def __init__(self, db_adapter):
-        super().__init__(db_adapter)
+    def __init__(self, db_adapter, export_file: str = None):
+        super().__init__(db_adapter, export_file)
 
     def create_database(self, name: str, props: dict = {}):
         """Создать новую базу данных
@@ -30,7 +32,7 @@ class MySQLMigrator(BaseMigrator):
             str_option = f"DEFAULT CHARACTER SET '{str(props.get('charset', ''))}'"
         else:
             str_option = f"DEFAULT CHARACTER SET utf8"
-        self._db_adapter.query(f"CREATE DATABASE `{name}` {str_option};")
+        self._exec_query_or_export(f"CREATE DATABASE `{name}` {str_option};")
 
     def drop_database(self, name: str):
         """Удалить базу данных
@@ -43,7 +45,7 @@ class MySQLMigrator(BaseMigrator):
             raise Exception("[MySQLMigrator][drop_database] Database name is Empty!")
         if not self._db_adapter:
             raise Exception("[MySQLMigrator][drop_database] Database adapter is None!")
-        self._db_adapter.query(f"DROP DATABASE IF EXISTS `{name}`;")
+        self._exec_query_or_export(f"DROP DATABASE IF EXISTS `{name}`;")
 
     def table_indexes(self, table_name: str) -> dict:
         """Запросить список индексов для таблицы
@@ -276,7 +278,7 @@ class MySQLMigrator(BaseMigrator):
         if tmp_columns[column_name]['default']:
             col_default = self.make_default_value(str(tmp_columns[column_name]['default']), col_type)
 
-        self._db_adapter.query(f"ALTER TABLE {tmp_table_name} CHANGE {tmp_column_name} {tmp_column_new_name} {col_type} {col_is_not_null} {col_default};")
+        self._exec_query_or_export(f"ALTER TABLE {tmp_table_name} CHANGE {tmp_column_name} {tmp_column_new_name} {col_type} {col_is_not_null} {col_default};")
         for k, v in tmp_indexes.items():
             if not column_name in v['columns']:
                 continue
@@ -304,7 +306,7 @@ class MySQLMigrator(BaseMigrator):
         table_name = self._db_adapter.quote_table_name(table_name)
         # drop default
         sql = f"ALTER TABLE {table_name} ALTER COLUMN {self._db_adapter.quote_table_name(column_name)} DROP DEFAULT;"
-        self._db_adapter.query(sql)
+        self._exec_query_or_export(sql)
         # change type
         tmp_limit = props.get('limit', None)
         if tmp_limit:
@@ -319,7 +321,7 @@ class MySQLMigrator(BaseMigrator):
             col_default = self.make_default_value(str(props['default']), tmp_type)
 
         sql = f"ALTER TABLE {table_name} MODIFY {self._db_adapter.quote_table_name(column_name)} {tmp_type} {col_is_not_null} {col_default};"
-        self._db_adapter.query(sql)
+        self._exec_query_or_export(sql)
 
     def change_column_null(self, table_name: str, column_name: str, not_null: bool = False):
         """Добавить/Удалить секцию NOT NULL у колонки
@@ -346,7 +348,7 @@ class MySQLMigrator(BaseMigrator):
         if tmp_columns[column_name]['default']:
             col_default = self.make_default_value(str(tmp_columns[column_name]['default']), col_type)
 
-        self._db_adapter.query(f"ALTER TABLE {table_name} MODIFY {self._db_adapter.quote_table_name(column_name)} {col_type} {col_is_not_null} {col_default};")
+        self._exec_query_or_export(f"ALTER TABLE {table_name} MODIFY {self._db_adapter.quote_table_name(column_name)} {col_type} {col_is_not_null} {col_default};")
 
     def rename_index(self, table_name: str, old_name: str, new_name: str):
         """Переименовать индекс для таблицы
@@ -393,7 +395,7 @@ class MySQLMigrator(BaseMigrator):
                 break
         if tmp_name == "":
             raise Exception(f"[MySQLMigrator][drop_foreign_key] Not found foreign key for columns \"{columns_names}\"!")
-        self._db_adapter.query(f"ALTER TABLE {self._db_adapter.quote_table_name(table_name)} DROP CONSTRAINT {self._db_adapter.quote_table_name(tmp_name)};")
+        self._exec_query_or_export(f"ALTER TABLE {self._db_adapter.quote_table_name(table_name)} DROP CONSTRAINT {self._db_adapter.quote_table_name(tmp_name)};")
         self.drop_index(table_name, {'name': tmp_name, 'if_exists': True})
 
     def _drop_index_protected(self, args: dict):
@@ -437,4 +439,4 @@ class MySQLMigrator(BaseMigrator):
             if not tmp_name in t_indexes:
                 return  # not found -> ok -> exit
 
-        self._db_adapter.query(f"DROP INDEX {self._db_adapter.quote_table_name(tmp_name)} ON {self._db_adapter.quote_table_name(args['table'])};")
+        self._exec_query_or_export(f"DROP INDEX {self._db_adapter.quote_table_name(tmp_name)} ON {self._db_adapter.quote_table_name(args['table'])};")

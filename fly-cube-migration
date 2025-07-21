@@ -20,7 +20,7 @@ from src.Settings.Settings import Settings
 from src.PostScripts.PostScripts import PostScripts
 from src.TemplateCompiler.TemplateCompiler import TemplateCompiler
 
-version = "1.1.0"
+version = "1.2.0"
 url_fly_cube_migration_latest = "https://api.github.com/repos/AnthonySnow887/FlyCubeMigration/releases/latest"
 
 
@@ -347,6 +347,53 @@ def db_migrate_redo(cmd, value):
     print("")
     print("=== FlyCubeMigration =====================\r\n")
 
+
+def db_migrate_export(cmd, value):
+    # init core
+    init_core()
+    # run command
+    db_names = []
+    result = re.search('^--db-migrate-export-(.*)$', cmd)
+    if not result:
+        s_db = DatabaseFactory.instance().secondary_databases()
+        db_names = [''] + s_db
+    else:
+        db_name = result.group(1)
+        if db_name == 'primary':
+            db_name = ''
+        db_names = [db_name]
+
+    print("=== FlyCubeMigration: Export database migrations ===\r\n")
+    print(f"Env type: {Config.instance().env_mode_str()}")
+    m_version = int(ConsoleHelper.application_argv_value('--to-version', -1))
+    m_dir = str(ConsoleHelper.application_argv_value('--dir', f"{db_migrations_dir()}/export/"))
+    MigrationCore.instance().migrate_export(db_names, m_version, m_dir)
+    print("")
+    print("=== FlyCubeMigration =====================\r\n")
+
+
+def db_rollback_export(cmd, value):
+    # init core
+    init_core()
+    # run command
+    db_names = []
+    result = re.search('^--db-rollback-export-(.*)$', cmd)
+    if not result:
+        s_db = DatabaseFactory.instance().secondary_databases()
+        db_names = [''] + s_db
+    else:
+        db_name = result.group(1)
+        if db_name == 'primary':
+            db_name = ''
+        db_names = [db_name]
+
+    print("=== FlyCubeMigration: Export database migrations ===\r\n")
+    print(f"Env type: {Config.instance().env_mode_str()}")
+    m_version = 0
+    m_dir = str(ConsoleHelper.application_argv_value('--dir', f"{db_migrations_dir()}/export/"))
+    MigrationCore.instance().migrate_export(db_names, m_version, m_dir)
+    print("")
+    print("=== FlyCubeMigration =====================\r\n")
 
 def db_rollback(cmd, value):
     # init core
@@ -860,6 +907,56 @@ def main():
                 'group': '--db-version'
             })
 
+    #
+    # --db-migrate-export... commands:
+    #
+    # --db-migrate-export
+    ConsoleHelper.instance().append_helper(db_migrate_export, {
+        'command': '--db-migrate-export',
+        'description': 'Export all database(s) migrations (section: up)',
+        'group': '--db-migrate-export'
+    })
+    if DatabaseFactory.instance().has_secondary_databases():
+        # --db-migrate-export-primary
+        ConsoleHelper.instance().append_helper(db_migrate_export, {
+            'command': '--db-migrate-export-primary',
+            'description': 'Export primary database migrations (section: up)',
+            'group': '--db-migrate-export'
+        })
+
+        for d in DatabaseFactory.instance().secondary_databases():
+            # --db-migrate-export-[database name]
+            ConsoleHelper.instance().append_helper(db_migrate_export, {
+                'command': f"--db-migrate-export-{d}",
+                'description': f"Export database '{d}' migrations (section: up)",
+                'group': '--db-migrate-export'
+            })
+
+    #
+    # --db-rollback-export... commands:
+    #
+    # --db-rollback-export
+    ConsoleHelper.instance().append_helper(db_rollback_export, {
+        'command': '--db-rollback-export',
+        'description': 'Export all database(s) migrations (section: down)',
+        'group': '--db-rollback-export'
+    })
+    if DatabaseFactory.instance().has_secondary_databases():
+        # --db-migrate-export-primary
+        ConsoleHelper.instance().append_helper(db_rollback_export, {
+            'command': '--db-rollback-export-primary',
+            'description': 'Export primary database migrations (section: down)',
+            'group': '--db-rollback-export'
+        })
+
+        for d in DatabaseFactory.instance().secondary_databases():
+            # --db-migrate-export-[database name]
+            ConsoleHelper.instance().append_helper(db_rollback_export, {
+                'command': f"--db-rollback-export-{d}",
+                'description': f"Export database '{d}' migrations (section: down)",
+                'group': '--db-rollback-export'
+            })
+
     # NOTE: Disabled in this version
     # #
     # # --db-schema-dump... commands:
@@ -932,6 +1029,14 @@ def main():
         'command': '--step',
         'param': '[VALUE]',
         'description': 'Set needed number of steps for uninstall (re-install) migrations (optional; default: 1)',
+        'group': 'other'
+    })
+
+    # --dir=[VALUE]
+    ConsoleHelper.instance().append_helper(None, {
+        'command': '--dir',
+        'param': '[VALUE]',
+        'description': 'Set directory for export migration files (optional; default: \"FLY_CUBE_MIGRATION_DIR/export/\")',
         'group': 'other'
     })
 

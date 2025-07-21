@@ -2,6 +2,7 @@ import sys
 import os
 import re
 import importlib
+import shutil
 from src.Logger.ConsoleLogger import ConsoleLogger
 from src.Database.DatabaseFactory import DatabaseFactory
 from src.Helper.Helper import Helper
@@ -193,6 +194,96 @@ class MigrationCore:
 
         # Execute post-scripts
         self.__execute_all_post_scripts(changed_databases)
+
+    def migrate_export(self, db_names: list, version: int = -1, dir_export: str = ""):
+        """Метод выгрузки миграций базы данных в SQL файлы
+
+        :param db_names: список имен баз данных для которых требуется миграция
+        :param version: версия миграции, до которой требуется актуализировать базы данных
+        :param dir_export: каталог для экспорта миграций
+        """
+
+        if len(self.__migrations) == 0:
+            print(ConsoleLogger.instance().make_color_string("[MigrationsCore] Not found migration files!", 'error'))
+            return
+        if len(db_names) == 0:
+            print(ConsoleLogger.instance().make_color_string("[MigrationsCore] Database names list is Empty!", 'error'))
+            return
+        if version < 0:
+            version = 0
+        # sort migrations
+        m_command = 'up'
+        mirgations = self.__migrations
+        if version > 0:
+            mirgations = Helper.sort(mirgations)
+        else:
+            mirgations = Helper.sort(mirgations, True)
+            m_command = 'down'
+
+        print(f"[MigrationsCore] Start export migrations:")
+
+        # check export dir
+        if not os.path.exists(dir_export):
+            os.mkdir(dir_export)
+        else:
+            shutil.rmtree(dir_export)
+            os.mkdir(dir_export)
+
+        new_version = -1
+        for k, m in mirgations.items():
+            # configuration current migration
+            m.configuration()
+            # select migration info
+            m_version = int(k)
+            m_class_name = type(m).__name__
+            m_database = m.database()
+            m_database_title = m_database
+            if m_database_title == "":
+                m_database_title = 'primary'
+            # select current adapter name
+            db_adapter_name = ''
+            if m_database == "":
+                db_adapter_name = DatabaseFactory.instance().primary_adapter_name()
+            else:
+                db_adapter_name = DatabaseFactory.instance().secondary_adapter_name(m_database)
+            # check db adapter name
+            if db_adapter_name == "":
+                print(ConsoleLogger.instance().make_color_string(
+                    "[MigrationsCore] Invalid current database adapter name!", 'error'))
+                return
+            # select current migrator name
+            migrator_name = self.__migrator_class_name(db_adapter_name)
+            if migrator_name == "":
+                print(ConsoleLogger.instance().make_color_string(
+                    f"[MigrationsCore] Invalid current migrator name for database adapter (name: {db_adapter_name})!",
+                    'error'))
+                return
+            # check database name
+            if not m_database in db_names:
+                continue
+            # check version
+            if m_command == "up" and new_version == version:
+                break
+            elif m_command == "down" and m_version == version:
+                new_version = version
+                break
+
+            # check dir for current database migrations
+            tmp_dir_export = f"{Helper.splice_symbol_last(dir_export, '/')}/{m_database_title}"
+            if not os.path.exists(tmp_dir_export):
+                os.mkdir(tmp_dir_export)
+
+            print(
+                f"[{ConsoleLogger.instance().make_color_string(m_command.capitalize(), 'ok')}][DB: {m_database_title}] Export ({m_version} - '{m_class_name}')")
+            if not m.export_migrate(version, migrator_name, Helper.splice_symbol_last(tmp_dir_export, '/')):
+                print(
+                    f"[{ConsoleLogger.instance().make_color_string(m_command.capitalize() + ' - FAILED', 'error')}][DB: {m_database_title}] Export ({m_version} - '{m_class_name}')")
+                break
+
+            new_version = m_version
+
+        print("[MigrationsCore] Finish export migrations")
+        print(f"[MigrationsCore] Directory for export: {dir_export}")
 
     def rollback(self, db_names: list, step: int = 1):
         """Метод отката миграции
