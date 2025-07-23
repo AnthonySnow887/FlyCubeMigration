@@ -1,4 +1,5 @@
 from abc import ABCMeta, abstractmethod, abstractproperty
+from src.Helper.Helper import Helper
 
 
 class BaseMigrator:
@@ -989,7 +990,7 @@ class BaseMigrator:
         if not self.__is_export():
             return
         with open(self._export_file, 'a') as f:
-            f.write(sql)
+            f.write(Helper.text_left_strip(sql, True))
             f.write("\n")
 
     def _exec_query_or_export(self, sql: str):

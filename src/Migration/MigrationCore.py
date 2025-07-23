@@ -210,7 +210,7 @@ class MigrationCore:
             print(ConsoleLogger.instance().make_color_string("[MigrationsCore] Database names list is Empty!", 'error'))
             return
         if version < 0:
-            version = 0
+            version = sys.maxsize
         # sort migrations
         m_command = 'up'
         mirgations = self.__migrations
