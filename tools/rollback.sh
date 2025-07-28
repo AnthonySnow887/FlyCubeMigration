@@ -21,11 +21,14 @@ function show_help() {
 
     printf "\nHelp:"
     printf "\n  -d,  --dir          - set sql migrations directory"
-    printf "\n  -tv, --to-version   - set max sql migration version (default: None)"
+    printf "\n  -tv, --to-version   - set min sql migration version (default: 0)"
     printf "\n  -dh, --dbhost       - set database host address"
     printf "\n  -db, --dbname       - set database name"
     printf "\n  -u,  --username     - set user name for connect to database"
     printf "\n  -p,  --password     - set user password for connect to database"
+    printf "\n"
+    printf "\nNote:"
+    printf "\n  If the arg '--to-version' is default, then all migrations will be removed from the database!"
     printf "\n"
     printf "\nExample usage:"
     printf "\n"
@@ -53,7 +56,31 @@ function get_current_db_version() {
 }
 
 #
-# Function for install migration
+# Function for check and set new db version
+# Input args:
+# 1 - db host
+# 2 - db name
+# 3 - db user
+# 4 - migration version
+#
+function check_current_db_version() {
+    local host=$1
+    local name=$2
+    local user=$3
+    local version=$4
+    local cur_db_version=`psql $host -d $name -U $user -c "SELECT version FROM schema_migrations WHERE version = '$version';" | grep -oP "\d\d\d\d\d\d\d\d\d\d\d\d\d\d"`
+    if [ -z "$cur_db_version" ]
+    then
+        cur_db_version="0"
+    fi
+    if [ "$cur_db_version" != "$version" ]
+    then
+        psql $host -d $name -U $user -c "INSERT INTO schema_migrations (version) VALUES ('$version');" &> /dev/null
+    fi
+}
+
+#
+# Function for rollback migration
 # Input args:
 # 1 - db host
 # 2 - db name
@@ -61,7 +88,7 @@ function get_current_db_version() {
 # 4 - sql file path
 # 5 - migration version
 #
-function install_migration() {
+function rollback_migration() {
     local host=$1
     local name=$2
     local user=$3
@@ -75,7 +102,7 @@ function install_migration() {
     result_code=$?
     if [ "$result_code" -eq "0" ]
     then
-        psql $host -d $name -U $user -c "INSERT INTO schema_migrations (version) VALUES ('$version');" &> /dev/null
+        psql $host -d $name -U $user -c "DELETE FROM schema_migrations WHERE version = '$version';" &> /dev/null
     fi
     echo "$result_code"
 }
@@ -84,10 +111,8 @@ function install_migration() {
 # main
 #
 
-MAX_INT=9223372036854775807
-
 dir=""
-to_version=$MAX_INT
+to_version=0
 db_host=""
 db_name=""
 db_user=""
@@ -190,8 +215,32 @@ then
     exit 1;
 fi
 
+# Check --to-version
+if [ $to_version -le 0 ]
+then
+    read  -n 1 -p "Arg '--to-version' value is less than or equal to 0. Do you want to remove all migrations from the database, y/n? " choice
+    echo ""
+    if [ $choice != "y" ]
+    then
+        exit 0
+    fi
+fi
+
+
 pwd=`pwd`
 cd $dir
+
+# check is remove all
+min_m_number=`ls *.sql | sort -n -t _ -k 1 | head -n 1 | grep -oP "\d\d\d\d\d\d\d\d\d\d\d\d\d\d"`
+if [ $to_version -lt $min_m_number ]
+then
+    read  -n 1 -p "Arg '--to-version' value is less than minimum migration version. Do you want to remove all migrations from the database, y/n? " choice
+    echo ""
+    if [ $choice != "y" ]
+    then
+        exit 0
+    fi
+fi
 
 # Check database host
 db_host_arg=""
@@ -205,33 +254,39 @@ if [[ -n "$db_pass" ]]
 then
     export PGPASSWORD=$db_pass
 fi
-
+exit 0
 # get current database version
 current_db_version="$(get_current_db_version "$db_host_arg" "$db_name" "$db_user")"
 printf "\nCurrent database version: $current_db_version"
 
-# install migrations
-for i in `ls *.sql | sort -n -t _ -k 1`
+# rollback migrations
+for i in `ls *.sql | sort -nr -t _ -k 1`
 do
     m_number=`echo $i | grep -oP "\d\d\d\d\d\d\d\d\d\d\d\d\d\d"`
-    if [ $m_number -gt $to_version ]
+    if [ $current_db_version -eq $to_version ]
     then
         break
     fi
-    if [ $current_db_version -gt $m_number ]
+    if [ $m_number -eq $to_version ]
     then
-        continue
+        check_current_db_version "$db_host_arg" "$db_name" "$db_user" "$m_number"
+        break
     fi
-    if [ $current_db_version -eq $m_number ]
+    if [ $m_number -lt $to_version ]
+    then
+        check_current_db_version "$db_host_arg" "$db_name" "$db_user" "$m_number"
+        break
+    fi
+    if [ $current_db_version -lt $m_number ]
     then
         continue
     fi
 
-    printf "\n[Up] $i"
-    result_code="$(install_migration "$db_host_arg" "$db_name" "$db_user" "./$i" "$m_number")"
+    printf "\n[Down] $i"
+    result_code="$(rollback_migration "$db_host_arg" "$db_name" "$db_user" "./$i" "$m_number")"
     if [ $result_code -ne 0 ]
     then
-        printf "\n\nMigrate failed! Error:\n\n"
+        printf "\n\nRollback failed! Error:\n\n"
         cat psql_stderr.txt
         break
     fi
@@ -245,7 +300,7 @@ fi
 
 # get current database version
 current_db_version="$(get_current_db_version "$db_host_arg" "$db_name" "$db_user")"
-printf "\nMigrate finished"
+printf "\nRollback finished"
 printf "\nNew database version: $current_db_version\n\n"
 
 # Check database password and unset
