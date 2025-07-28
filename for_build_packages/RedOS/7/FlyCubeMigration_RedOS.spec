@@ -5,7 +5,7 @@ AutoReq: no
 
 
 Name:       fly-cube-migration
-Version: 	1.1.0
+Version: 	1.2.0
 Release: 	1
 Group:      Development/Python
 Packager: 	AnthonySnow887
@@ -37,6 +37,7 @@ cp -r templates %{buildroot}/usr/local/FlyCubeMigration/
 cp -r for_build_packages %{buildroot}/usr/local/FlyCubeMigration/
 cp -r examples %{buildroot}/usr/local/FlyCubeMigration/
 cp -r src %{buildroot}/usr/local/FlyCubeMigration/
+cp -r tools %{buildroot}/usr/local/FlyCubeMigration/
 cp -r *.* %{buildroot}/usr/local/FlyCubeMigration/
 install -Dm 0755 -p fly-cube-migration %{buildroot}/usr/local/FlyCubeMigration/fly-cube-migration
 install -Dm 0755 -p LICENSE %{buildroot}/usr/local/FlyCubeMigration/LICENSE
