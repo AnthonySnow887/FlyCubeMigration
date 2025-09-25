@@ -18,15 +18,16 @@ POST-scripts are standard SQL scripts located in one or more directories and con
 Installation of POST-scripts is performed in transaction mode for all modified databases and in case of errors
 rolls back the database state to the installation stage of the POST-script that caused the error.
 
-Supported databases
--------------------
+Starting from version 1.2.0, support for exporting migration files to SQL files has been added.
+This mechanism allows you to use the database's built-in console utilities to install or remove migrations without the need for all the required Python3 libraries and tools.
+
+## Supported databases
 
 - SQLite 3;
 - PostgreSQL 9.6 or later.
 - MySQL/MariaDB (tested on MariaDB 10.2.36)
 
-Operating systems tested
-------------------------
+## Operating systems tested
 
 - Alma Linux 9.1
 - Alt Linux 8.1 and later
@@ -38,31 +39,26 @@ Operating systems tested
 - Rosa Linux 12.4
 - Ubuntu 20.04 and later
 
-Basic system requirements
--------------------------
+## Basic system requirements
 
 - python >= 3.6
 
-Additional required Python modules
-----------------------------------
+## Additional required Python modules
 
 - python3-psycopg2
 - python3-mysql-connector-python
 - python3-PyYAML
 - python3-requests
 
-Releases
---------
+## Releases
 
 Releases of FlyCubeMigration are available on [Github](https://github.com/AnthonySnow887/FlyCubeMigration/releases).
 
-License
--------
+## License
 
 FlyCubeMigration is licensed under the GPL-3.0 License. See the LICENSE file for details.
 
-Usage
------
+## Usage
 
 ```bash
 FlyCubeMigration> ./fly-cube-migration --help
@@ -74,42 +70,47 @@ Options include:
   --help                    Show help [-h, -?]
   --version                 Print the version [-v]
   --latest-version          Select latest version from GitHub [-lv]
-  --env=[VALUE]             Set current environment (production/development; default: development) 
-  --output=[VALUE]          Show sql output (optional) (default: false) 
-  --config-dir=[VALUE]      Set FlyCubeMigration config file directory (optional) (default: 'config/') 
-  --save-config-dir         Save in settings FlyCubeMigration config file directory 
-  --clear-config-dir        Clear from settings FlyCubeMigration config file directory 
-  --settings                Show current FlyCubeMigration config settings 
+  --env=[VALUE]             Set current environment (production/development; default: development)
+  --output=[VALUE]          Show sql output (optional) (default: false)
+  --config-dir=[VALUE]      Set FlyCubeMigration config file directory (optional) (default: 'config/')
+  --save-config-dir         Save in settings FlyCubeMigration config file directory
+  --clear-config-dir        Clear from settings FlyCubeMigration config file directory
+  --settings                Show current FlyCubeMigration config settings
 
 
-  --post-scripts            Show loaded post-scripts 
+  --post-scripts            Show loaded post-scripts
 
-  --new-project             Create new FlyCubeMigration project 
+  --new-project             Create new FlyCubeMigration project
 
-  --new-migration           Create new migration 
+  --new-migration           Create new migration
 
-  --make-migration-number   Create and output new migration version number 
+  --make-migration-number   Create and output new migration version number
 
-  --db-create               Create all databases for current environment 
-  --db-create-all           Create all databases for all environments (development and production) 
+  --db-create               Create all databases for current environment
+  --db-create-all           Create all databases for all environments (development and production)
 
-  --db-drop                 Drop all databases for current environment 
-  --db-drop-all             Drop all databases for all environments (development and production) 
+  --db-drop                 Drop all databases for current environment
+  --db-drop-all             Drop all databases for all environments (development and production)
 
-  --db-migrate              Start all database(s) migrations 
+  --db-migrate              Start all database(s) migrations
 
-  --db-migrate-redo         Start re-install last database migration 
+  --db-migrate-redo         Start re-install last database migration
 
-  --db-migrate-status       Select migrations status 
+  --db-migrate-status       Select migrations status
 
-  --db-rollback             Start uninstall last database migration 
-  --db-rollback-all         Start uninstall all database(s) migrations 
+  --db-rollback             Start uninstall last database migration
+  --db-rollback-all         Start uninstall all database(s) migrations
 
-  --db-version              Select database(s) migration version 
+  --db-version              Select database(s) migration version
 
-  --name=[VALUE]            Set new object name 
-  --to-version=[VALUE]      Set needed migration version (optional; if 0 - uninstall all migrations) 
-  --step=[VALUE]            Set needed number of steps for uninstall (re-install) migrations (optional; default: 1) 
+  --db-migrate-export       Export all database(s) migrations (section: up)
+
+  --db-rollback-export      Export all database(s) migrations (section: down)
+
+  --name=[VALUE]            Set new object name
+  --to-version=[VALUE]      Set needed migration version (optional; if 0 - uninstall all migrations)
+  --step=[VALUE]            Set needed number of steps for uninstall (re-install) migrations (optional; default: 1)
+  --dir=[VALUE]             Set directory for export migration files (optional; default: "FLY_CUBE_MIGRATION_DIR/export/")
 
 
 Examples:
@@ -160,8 +161,7 @@ Examples:
      ./fly-cube-migration --db-migrate-redo --step=3
 ```
 
-Quick start
------------
+## Quick start
 
 To get started with FlyCubeMigration, create a new project with the command:
 ```bash
@@ -179,8 +179,7 @@ $> ./fly-cube-migration --new-project --name=MyProject
 === FlyCubeMigration =========================
 ```
 
-FlyCubeMigration configure file
--------------------------------
+## FlyCubeMigration configure file
 
 The configuration file must be located in directory ```config/``` and his name must match ```fly-cube-migration.yml```.
 Full path to the file: ```config/fly-cube-migration.yml```
@@ -251,8 +250,7 @@ FLY_CUBE_MIGRATION_CONFIG_DIR: "config/"
 FLY_CUBE_MIGRATION_DB_MIGRATIONS_DIR: "db/migrate/"
 ```
  
-Database configure file
------------------------
+## Database configure file
 
 By default, the database configuration file is located in the directory ```config/``` and his name must match ```database.yml```.
 Full path to the file: ```config/database.yml```
@@ -371,8 +369,7 @@ development_secondary:
 #  test-2: *default_postgresql_unix_dev
 ```
 
-POST-script configure file
---------------------------
+## POST-script configure file
 
 POST-scripts are standard SQL scripts located in one or more directories and containing commands common to all migrations.
 POST-scripts allow you to automate routine actions required after installing/reinstalling/uninstalling migrations.
@@ -462,8 +459,7 @@ Description of the fields of the configuration file:
   - [str|list] directory            - contains the path/list of paths to directories with SQL scripts
 
 
-Migration description
----------------------
+## Migration description
 
 Migrations are a convenient way to manage the structure of your database. Like Ruby on Rails, 
 the FlyCubeMigration migration system provides a wide range of methods for working with the database schema. 
@@ -580,13 +576,11 @@ class ExampleMigration(BaseMigration):
         return 
 ```
 
-Migration examples
-------------------
+## Migration examples
 
 The following are examples of using different migration methods.
 
-Create/Drop Extension
----------------------
+### Create/Drop Extension
 
 The ```create_extension``` and ```drop_extension``` methods allow you to enable (or disable) the required database extension.
 
@@ -619,8 +613,7 @@ class CreateExtension(BaseMigration):
         self.drop_extension('uuid-ossp', {'if_exists': True})
 ```
 
-Create/Drop Schema
-------------------
+### Create/Drop Schema
 
 The ```create_schema``` and ```drop_schema``` methods allow you to create (or drop) a new data schema.
 
@@ -653,8 +646,7 @@ class CreateSchema(BaseMigration):
         self.drop_schema('test_schema', {'if_exists': True})
 ```
 
-Create table
-------------
+### Create table
 
 The ```create_table``` method allows you to create a new table in the database.
 
@@ -728,8 +720,7 @@ CREATE TABLE test_schema.test_table
 )
 ```
 
-Rename table
-------------
+### Rename table
 
 The ```rename_table``` method allows you to rename a table.
 
@@ -746,8 +737,7 @@ class RenameTable(BaseMigration):
         self.rename_table('test_schema.test_table_renamed', 'test_schema.test_table')
 ```
 
-Drop table
-----------
+### Drop table
 
 The ```drop_table``` method allows you to drop a previously created table.
 
@@ -764,8 +754,7 @@ class DropTable(BaseMigration):
         return 
 ```
 
-Add column
-----------
+### Add column
 
 The ```add_column``` method allows you to add a new column to a previously created table.
 
@@ -795,8 +784,7 @@ class AddColumn(BaseMigration):
         self.drop_column('test_schema.test_table_renamed', 'my_new_column')
 ```
 
-Rename column
--------------
+### Rename column
 
 The ```rename_column``` method allows you to rename a column in a table.
 
@@ -818,8 +806,7 @@ class RenameColumn(BaseMigration):
         self.rename_column('test_schema.test_table_renamed', 'my_new_column_renamed', 'my_new_column')
 ```
 
-Change column
--------------
+### Change column
 
 The ```change_column``` method allows you to change the type of the column and its optional parameters, if they are set.
 
@@ -849,8 +836,7 @@ class ChangeColumn(BaseMigration):
         })
 ```
 
-Change column default
----------------------
+### Change column default
 
 The ```change_column_default``` method allows you to change/delete the ```DEFAULT``` property of a table column.
 
@@ -876,8 +862,7 @@ class ChangeColumnDefault(BaseMigration):
         self.change_column_default('test_schema.test_table_renamed', 'my_new_column_renamed', '---???---')
 ```
 
-Change column null
-------------------
+### Change column null
 
 The ```change_column_null``` method allows you to add/remove the ```NOT NULL``` property of a table column.
 
@@ -903,8 +888,7 @@ class ChangeColumnNull(BaseMigration):
         self.change_column_null('test_schema.test_table_renamed', 'my_new_column_renamed', True)
 ```
 
-Drop column
------------
+### Drop column
 
 The ```drop_column``` method allows you to drop a column from a table.
 
@@ -921,8 +905,7 @@ class DropColumn(BaseMigration):
         return 
 ```
 
-Add index
----------
+### Add index
 
 The ```add_index``` method allows you to add an index to a table.
 
@@ -961,8 +944,7 @@ class AddIndex(BaseMigration):
         self.drop_table('test_schema.test_table_2')
 ```
 
-Rename index
-------------
+### Rename index
 
 The ```rename_index``` method allows you to rename an index for a table.
 
@@ -984,8 +966,7 @@ class RenameIndex(BaseMigration):
         self.rename_index('test_schema.test_table_2', 'my_test_index_renamed', 'my_test_index')
 ```
 
-Drop index
-----------
+### Drop index
 
 The ```drop_index``` method allows you to drop a table index.
 
@@ -1016,8 +997,7 @@ class DropIndex(BaseMigration):
         self.add_index('test_schema.test_table_2', ['my_id_2'])
 ```
 
-Set/Drop primary key
---------------------
+### Set/Drop primary key
 
 The ```set_primary_key``` and ```drop_primary_key``` methods allow you to set (or drop) a new primary key for a table.
 
@@ -1038,8 +1018,7 @@ class SetPrimaryKey(BaseMigration):
         self.drop_primary_key('test_schema.test_table_2', 'my_id')
 ```
 
-Add/Drop foreign key
---------------------
+### Add/Drop foreign key
 
 The ```add_foreign_key``` and ```drop_foreign_key``` methods allow you to add (or remove) a foreign (secondary) key for a table.
 
@@ -1074,8 +1053,7 @@ class AddForeignKey(BaseMigration):
         self.drop_foreign_key('test_schema.test_table_2', ['my_id_2'])
 ```
 
-Add/Drop foreign key p_key
---------------------------
+### Add/Drop foreign key p_key
 
 The ```add_foreign_key_p_key``` and ```drop_foreign_key_p_key``` methods allow you to add (or remove) a foreign key for a table,
 that refers to the primary key of another table.
@@ -1128,8 +1106,7 @@ class AddForeignKeyPKey(BaseMigration):
         self.drop_table('test_schema.test_table_3')
 ```
 
-Execution of any SQL query
---------------------------
+### Execution of any SQL query
 
 The ```execute``` method allows you to execute any SQL query.
 
@@ -1153,13 +1130,186 @@ class ExecuteSQL(BaseMigration):
         self.execute("DROP TABLE my_test_table;")
 ```
 
-Work examples
--------------
+## Exporting Migration Files to SQL-files
+
+The following methods have been added for exporting migration files to SQL-files since version 1.2.0:
+  - ```--db-migrate-export```     - Export migrations for all databases (section: up)
+  - ```--db-rollback-export```    - Export migrations for all databases (section: down)
+
+>
+> NOTE:
+>
+> An additional parameter is provided for specifying the directory where migrations will be exported:
+>   - ```--dir=[VALUE]``` - Specify the directory for exporting SQL migrations (optional; default: "FLY_CUBE_MIGRATION_DIR/export/")
+>
+> If this directory does not exist in the system, it will be created.
+>
+> Example:
+> ```bash
+> $> ./fly-cube-migration --db-migrate-export --dir=/home/user/export
+> ```
+>
+
+These commands unload the corresponding sections (up or down) from migration files and save them to new SQL-files, whose names are formed from the migration name plus the ```.sql``` file extension.
+
+This mechanism allows you to use the database's built-in console utilities to install or remove migrations without having to use all the required Python3 libraries and tools.
+
+>
+> NOTE:
+>
+> Before you begin unloading migrations, the SQL migrations directory will be completely cleared!
+>
+
+Bash scripts have been added to the ```tools``` directory for installing SQL migration files into the database:
+  - ```migrate.sh```    - a script for installing migrations into the database
+  - ```rollback.sh```   - a script for deleting migrations from the database
+
+### Command: --db-migrate-export
+
+```bash
+$> ./fly-cube-migration --db-migrate-export
+=== FlyCubeMigration: Export database migrations ===
+
+Env type: Development
+[MigrationsCore] Start export migrations:
+[Up][DB: primary] Export (20241002175043 - 'AddWebhookTemplate')
+[Up][DB: primary] Export (20241209123002 - 'FixLogicalGroupClassif')
+[Up][DB: primary] Export (20241210151026 - 'AddChangelogTable')
+[Up][DB: primary] Export (20250109145904 - 'AddClusterTables')
+[Up][DB: primary] Export (20250129180207 - 'UpdateWebhookConfigsTemplates')
+[Up][DB: primary] Export (20250130164413 - 'AddUpdateTriggerOnNotificationMsgTemplates')
+[Up][DB: primary] Export (20250304141405 - 'ChangeParametersCheckInterval')
+[Up][DB: primary] Export (20250414180005 - 'UpdateDataSaving')
+[Up][DB: primary] Export (20250425160742 - 'FixSqlElementsHistoryDataGetFunc')
+[Up][DB: primary] Export (20250604173423 - 'ChangeChildServersInfoTables')
+[Up][DB: primary] Export (20250609202742 - 'UpdateHistoryCompression')
+[Up][DB: primary] Export (20250619171551 - 'FixSelectChangelogFunc')
+[Up][DB: primary] Export (20250626125624 - 'AddIgnoreOldOperativeData')
+[Up][DB: primary] Export (20250702143428 - 'ReorderHistoryColumns')
+[Up][DB: primary] Export (20250702173821 - 'AddClusterSettingsAndCmdTables')
+[Up][DB: primary] Export (20250714155400 - 'AddSipMetadata')
+[Up][DB: primary] Export (20250714160441 - 'ClearOldMetadata')
+[Up][DB: primary] Export (20250714162919 - 'ClearOldClassifProtocols')
+[Up][DB: primary] Export (20250716143254 - 'AddIndexesForHistory')
+[Up][DB: primary] Export (20250723145023 - 'ReCreateExtForTableCompressor')
+[Up][DB: primary] Export (20250731115107 - 'ChangeMetadataTables')
+[Up][DB: primary] Export (20250731115211 - 'AddWebhookNameUniqueConstraint')
+[Up][DB: primary] Export (20250806151343 - 'ReCreateExtForTableCompressor2')
+[Up][DB: primary] Export (20250820171933 - 'RemoveIndexesForHistoryDump')
+[MigrationsCore] Finish export migrations
+[MigrationsCore] Directory for export: /home/user/Database/schema_migrations/export/
+
+=== FlyCubeMigration =====================
+```
+
+### Installing SQL migrations with the migrate.sh script
+
+```bash
+$> sh tools/migrate.sh -h
+
+Help:
+  -d,  --dir          - set sql migrations directory
+  -tv, --to-version   - set max sql migration version (default: None)
+  -dh, --dbhost       - set database host address
+  -db, --dbname       - set database name
+  -u,  --username     - set user name for connect to database
+  -p,  --password     - set user password for connect to database
+
+Example usage:
+
+  #> sh tools/migrate.sh --dir export/primary/ -db test -u postgres -p 12345678
+
+  or
+
+  #> sh tools/migrate.sh -d export/primary/ -tv 20250714155400 -db test -u postgres -p 12345678
+```
+
+```bash
+$> sh tools/migrate.sh --dir /home/user/Database/schema_migrations/export/primary/ -db test -u postgres -p 12345678
+
+Current database version: 20250806151343
+[Up] 20250820171933_RemoveIndexesForHistoryDump.sql
+Migrate finished
+New database version: 20250820171933
+```
+
+### Command: --db-rollback-export
+
+```bash
+$> ./fly-cube-migration --db-rollback-export
+=== FlyCubeMigration: Export database migrations ===
+
+Env type: Development
+[MigrationsCore] Start export migrations:
+[Down][DB: primary] Export (20250820171933 - 'RemoveIndexesForHistoryDump')
+[Down][DB: primary] Export (20250806151343 - 'ReCreateExtForTableCompressor2')
+[Down][DB: primary] Export (20250731115211 - 'AddWebhookNameUniqueConstraint')
+[Down][DB: primary] Export (20250731115107 - 'ChangeMetadataTables')
+[Down][DB: primary] Export (20250723145023 - 'ReCreateExtForTableCompressor')
+[Down][DB: primary] Export (20250716143254 - 'AddIndexesForHistory')
+[Down][DB: primary] Export (20250714162919 - 'ClearOldClassifProtocols')
+[Down][DB: primary] Export (20250714160441 - 'ClearOldMetadata')
+[Down][DB: primary] Export (20250714155400 - 'AddSipMetadata')
+[Down][DB: primary] Export (20250702173821 - 'AddClusterSettingsAndCmdTables')
+[Down][DB: primary] Export (20250702143428 - 'ReorderHistoryColumns')
+[Down][DB: primary] Export (20250626125624 - 'AddIgnoreOldOperativeData')
+[Down][DB: primary] Export (20250619171551 - 'FixSelectChangelogFunc')
+[Down][DB: primary] Export (20250609202742 - 'UpdateHistoryCompression')
+[Down][DB: primary] Export (20250604173423 - 'ChangeChildServersInfoTables')
+[Down][DB: primary] Export (20250425160742 - 'FixSqlElementsHistoryDataGetFunc')
+[Down][DB: primary] Export (20250414180005 - 'UpdateDataSaving')
+[Down][DB: primary] Export (20250304141405 - 'ChangeParametersCheckInterval')
+[Down][DB: primary] Export (20250130164413 - 'AddUpdateTriggerOnNotificationMsgTemplates')
+[Down][DB: primary] Export (20250129180207 - 'UpdateWebhookConfigsTemplates')
+[Down][DB: primary] Export (20250109145904 - 'AddClusterTables')
+[Down][DB: primary] Export (20241210151026 - 'AddChangelogTable')
+[Down][DB: primary] Export (20241209123002 - 'FixLogicalGroupClassif')
+[Down][DB: primary] Export (20241002175043 - 'AddWebhookTemplate')
+[MigrationsCore] Finish export migrations
+[MigrationsCore] Directory for export: /home/user/Database/schema_migrations/export/
+
+=== FlyCubeMigration =====================
+```
+
+### Removing SQL migrations with the rollback.sh script
+
+```bash
+$> sh tools/rollback.sh -h
+
+Help:
+  -d,  --dir          - set sql migrations directory
+  -tv, --to-version   - set min sql migration version (default: 0)
+  -dh, --dbhost       - set database host address
+  -db, --dbname       - set database name
+  -u,  --username     - set user name for connect to database
+  -p,  --password     - set user password for connect to database
+
+Note:
+  If the arg '--to-version' is default, then all migrations will be removed from the database!
+
+Example usage:
+
+  #> sh tools/rollback.sh --dir export/primary/ -db test -u postgres -p 12345678
+
+  or
+
+  #> sh tools/rollback.sh -d export/primary/ -tv 20250714155400 -db test -u postgres -p 12345678
+```
+
+```bash
+$> sh tools/rollback.sh --dir /home/user/Database/schema_migrations/export/primary/ -tv 20250806151343 -db test -u postgres -p 12345678
+
+Current database version: 20250820171933
+[Down] 20250820171933_RemoveIndexesForHistoryDump.sql
+Rollback finished
+New database version: 20250806151343
+```
+
+## Work examples
 
 The following are examples of executing various application commands.
 
-Command: --db-migrate-status
-----------------------------
+### Command: --db-migrate-status
 
 ```bash
 $> ./fly-cube-migration --db-migrate-status
@@ -1189,8 +1339,7 @@ Env type: Development
 === FlyCubeMigration =====================
 ```
 
-Command: --db-migrate
----------------------
+### Command: --db-migrate
 
 ```bash
 $> ./fly-cube-migration --db-migrate
@@ -1223,8 +1372,7 @@ Env type: Development
 === FlyCubeMigration =====================
 ```
 
-Command: --db-rollback
-----------------------
+### Command: --db-rollback
 
 ```bash
 $> ./fly-cube-migration --db-rollback
@@ -1243,8 +1391,7 @@ Env type: Development
 === FlyCubeMigration =====================
 ```
 
-Command: --db-rollback-all
---------------------------
+### Command: --db-rollback-all
 
 ```bash
 $> ./fly-cube-migration --db-rollback-all
@@ -1277,8 +1424,7 @@ Env type: Development
 === FlyCubeMigration =====================
 ```
 
-Command: --make-migration-number
---------------------------------
+### Command: --make-migration-number
 
 ```bash
 $> ./fly-cube-migration --make-migration-number

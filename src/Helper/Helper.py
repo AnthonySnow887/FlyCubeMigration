@@ -1,5 +1,6 @@
 import os
 import pwd
+import io
 
 
 class Helper:
@@ -128,3 +129,15 @@ class Helper:
     @staticmethod
     def current_user() -> str:
         return str(pwd.getpwuid(os.getuid())[0])
+
+    @staticmethod
+    def text_left_strip(string: str, check_line_by_line: bool = False) -> str:
+        if not check_line_by_line:
+            return string.lstrip()
+        # read all lines from string
+        tmp_new_string = ""
+        buf_string = io.StringIO(string)
+        for line in buf_string:
+            tmp_new_string += line.lstrip()
+
+        return tmp_new_string

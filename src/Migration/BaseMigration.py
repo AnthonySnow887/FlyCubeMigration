@@ -14,13 +14,15 @@ from src.Migration.Migrators.MySQLMigrator import MySQLMigrator
 class BaseMigration:
     __metaclass__ = ABCMeta
     __version = None
+    __file = None
     __db_name = ''
     __db_adapter = None
     __migrator = None
 
     def __init__(self, version: int = None):
         m = importlib.import_module(self.__module__)
-        b_name = os.path.basename(m.__file__)
+        self.__file = m.__file__
+        b_name = os.path.basename(self.__file)
         result = re.search('^([0-9]{14})_(.*)\.py$', b_name)
         if result:
             self.__version = int(result.group(1))
@@ -125,6 +127,51 @@ class BaseMigration:
         except Exception as err:
             print(ConsoleLogger.instance().make_color_string(f"[BaseMigration] Migrate failed! Error: {err}", 'error'))
             self.__db_adapter.rollback_transaction()
+            result = False
+
+        del self.__migrator
+        self.__db_adapter.disconnect()
+        del self.__db_adapter
+        return result
+
+    def export_migrate(self, version: int, migrator_class_name: str, dir_export: str) -> bool:
+        """Выполнить экспорт миграции в SQL файл
+
+        :param version: версия
+        :param migrator_class_name: название класса мигратора
+        :param dir_export: каталог для экспорта миграций
+        :rtype: bool
+        """
+
+        if migrator_class_name == "":
+            return False
+        # get adapter
+        self.__db_adapter = DatabaseFactory.instance().create_database_adapter({'database': self.database()})
+        if not self.__db_adapter:
+            return False
+
+        # make export sql file name
+        export_file = os.path.basename(self.__file).replace(".py", ".sql")
+        export_file = f"{dir_export}/{export_file}"
+
+        # Creates a new export file
+        with open(export_file, 'w') as f:
+            pass
+
+        # make migrator
+        migrator_ = Helper.lookup(migrator_class_name, globals())
+        self.__migrator = migrator_(self.__db_adapter, export_file)
+        if not self.__migrator:
+            return False
+        # export migrate
+        try:
+            if version >= self.__version:
+                self.up()
+            else:
+                self.down()
+            result = True
+        except Exception as err:
+            print(ConsoleLogger.instance().make_color_string(f"[BaseMigration] Export migration failed! Error: {err}", 'error'))
             result = False
 
         del self.__migrator

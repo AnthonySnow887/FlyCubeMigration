@@ -1,12 +1,15 @@
 from abc import ABCMeta, abstractmethod, abstractproperty
+from src.Helper.Helper import Helper
 
 
 class BaseMigrator:
     __metaclass__ = ABCMeta
     _db_adapter = None
+    _export_file = None
 
-    def __init__(self, db_adapter):
+    def __init__(self, db_adapter, export_file: str = None):
         self._db_adapter = db_adapter
+        self._export_file = export_file
 
     #
     # base methods to override if needed:
@@ -320,7 +323,7 @@ class BaseMigrator:
         sql = f"CREATE TABLE {if_not_exists} {tmp_name} (\n"
         sql += self._prepare_create_table(name, args)
         sql += "\n);"
-        self._db_adapter.query(sql)
+        self._exec_query_or_export(sql)
 
     def rename_table(self, name: str, new_name: str):
         """Переименовать таблицу
@@ -337,7 +340,7 @@ class BaseMigrator:
         tmp_indexes = self.table_indexes(name)
         tmp_name = self._db_adapter.quote_table_name(name)
         tmp_new_name = self._db_adapter.quote_table_name(new_name)
-        self._db_adapter.query(f"ALTER TABLE {tmp_name} RENAME TO {tmp_new_name};")
+        self._exec_query_or_export(f"ALTER TABLE {tmp_name} RENAME TO {tmp_new_name};")
         for k, v in tmp_indexes.items():
             index_new_name = str(v['index_name']).replace(name, new_name)
             if str(v['index_name']) == index_new_name:
@@ -365,7 +368,7 @@ class BaseMigrator:
             sql += " IF EXISTS"
         if props.get('cascade', False):
             sql += " CASCADE"
-        self._db_adapter.query(f"{sql};")
+        self._exec_query_or_export(f"{sql};")
 
     def add_column(self, table_name: str, column_name: str, props: dict = {}):
         """Добавить колонку в таблицу
@@ -394,7 +397,7 @@ class BaseMigrator:
         if not tmp_res.get('sql'):
             raise Exception("[BaseMigrator][add_column] Prepare create column return empty result!")
         tmp_table_name = self._db_adapter.quote_table_name(table_name)
-        self._db_adapter.query(f"ALTER TABLE {tmp_table_name} ADD COLUMN {if_not_exists} {tmp_res.get('sql')};")
+        self._exec_query_or_export(f"ALTER TABLE {tmp_table_name} ADD COLUMN {if_not_exists} {tmp_res.get('sql')};")
 
     def rename_column(self, table_name: str, column_name: str, column_new_name: str):
         """Переименовать колонку в таблице
@@ -414,7 +417,7 @@ class BaseMigrator:
         tmp_table_name = self._db_adapter.quote_table_name(table_name)
         tmp_column_name = self._db_adapter.quote_table_name(column_name)
         tmp_column_new_name = self._db_adapter.quote_table_name(column_new_name)
-        self._db_adapter.query(f"ALTER TABLE {tmp_table_name} RENAME COLUMN {tmp_column_name} TO {tmp_column_new_name};")
+        self._exec_query_or_export(f"ALTER TABLE {tmp_table_name} RENAME COLUMN {tmp_column_name} TO {tmp_column_new_name};")
         for k, v in tmp_indexes.items():
             if not column_name in v['columns']:
                 continue
@@ -442,7 +445,7 @@ class BaseMigrator:
         table_name = self._db_adapter.quote_table_name(table_name)
         # drop default
         sql = f"ALTER TABLE {table_name} ALTER COLUMN {self._db_adapter.quote_table_name(column_name)} DROP DEFAULT;"
-        self._db_adapter.query(sql)
+        self._exec_query_or_export(sql)
         # change type
         tmp_limit = props.get('limit', None)
         if tmp_limit:
@@ -453,19 +456,19 @@ class BaseMigrator:
         if t_pos != -1:
             tmp_type_using = str(tmp_type_using[0:t_pos]).strip()
         sql = f"ALTER TABLE {table_name} ALTER COLUMN {self._db_adapter.quote_table_name(column_name)} TYPE {tmp_type} USING ({column_name}::{tmp_type_using});"
-        self._db_adapter.query(sql)
+        self._exec_query_or_export(sql)
         # change default
         if props.get('default', None):
             tmp_default = self.make_default_value(str(props['default']), tmp_type)
             sql = f"ALTER TABLE {table_name} ALTER COLUMN {self._db_adapter.quote_table_name(column_name)} SET {tmp_default}; "
-            self._db_adapter.query(sql)
+            self._exec_query_or_export(sql)
         # change not null
         if props.get('null', None):
             if not props.get('null'):
                 sql = f"ALTER TABLE {table_name} ALTER COLUMN {self._db_adapter.quote_table_name(column_name)} SET NOT NULL; "
             else:
                 sql = f"ALTER TABLE {table_name} ALTER COLUMN {self._db_adapter.quote_table_name(column_name)} DROP NOT NULL; "
-            self._db_adapter.query(sql)
+            self._exec_query_or_export(sql)
 
     def change_column_default(self, table_name: str, column_name: str, default=None):
         """Изменить/Удалить секцию DEFAULT у колонки
@@ -483,7 +486,7 @@ class BaseMigrator:
             # drop default
             table_name = self._db_adapter.quote_table_name(table_name)
             sql = f"ALTER TABLE {table_name} ALTER COLUMN {self._db_adapter.quote_table_name(column_name)} DROP DEFAULT;"
-            self._db_adapter.query(sql)
+            self._exec_query_or_export(sql)
         else:
             # replace default
             tmp_columns = self.table_columns(table_name)
@@ -493,7 +496,7 @@ class BaseMigrator:
             tmp_default = self.make_default_value(default, tmp_type)
             table_name = self._db_adapter.quote_table_name(table_name)
             sql = f"ALTER TABLE {table_name} ALTER COLUMN {self._db_adapter.quote_table_name(column_name)} SET {tmp_default};"
-            self._db_adapter.query(sql)
+            self._exec_query_or_export(sql)
 
     def change_column_null(self, table_name: str, column_name: str, not_null: bool = False):
         """Добавить/Удалить секцию NOT NULL у колонки
@@ -509,9 +512,9 @@ class BaseMigrator:
             raise Exception("[BaseMigrator][change_column_null] Database adapter is None!")
         table_name = self._db_adapter.quote_table_name(table_name)
         if not_null:
-            self._db_adapter.query(f"ALTER TABLE {table_name} ALTER COLUMN {self._db_adapter.quote_table_name(column_name)} SET NOT NULL;")
+            self._exec_query_or_export(f"ALTER TABLE {table_name} ALTER COLUMN {self._db_adapter.quote_table_name(column_name)} SET NOT NULL;")
         else:
-            self._db_adapter.query(f"ALTER TABLE {table_name} ALTER COLUMN {self._db_adapter.quote_table_name(column_name)} DROP NOT NULL;")
+            self._exec_query_or_export(f"ALTER TABLE {table_name} ALTER COLUMN {self._db_adapter.quote_table_name(column_name)} DROP NOT NULL;")
 
     def drop_column(self, table_name: str, column_name: str):
         """Удалить колонку из таблицы
@@ -527,7 +530,7 @@ class BaseMigrator:
         if not self._db_adapter:
             raise Exception("[BaseMigrator][drop_column] Database adapter is None!")
         table_name = self._db_adapter.quote_table_name(table_name)
-        self._db_adapter.query(f"ALTER TABLE {table_name} DROP COLUMN {self._db_adapter.quote_table_name(column_name)};")
+        self._exec_query_or_export(f"ALTER TABLE {table_name} DROP COLUMN {self._db_adapter.quote_table_name(column_name)};")
 
     def add_index(self, table_name: str, columns: list, props: dict = {}):
         """Добавить индекс для таблицы
@@ -563,7 +566,7 @@ class BaseMigrator:
             raise Exception("[BaseMigrator][rename_index] Old name is the same as new name!")
         tmp_old_name = self._db_adapter.quote_table_name(old_name)
         tmp_new_name = self._db_adapter.quote_table_name(new_name)
-        self._db_adapter.query(f"ALTER INDEX {tmp_old_name} RENAME TO {tmp_new_name};")
+        self._exec_query_or_export(f"ALTER INDEX {tmp_old_name} RENAME TO {tmp_new_name};")
 
     def drop_index(self, table_name: str, props: dict = {}):
         """Удалить индекс таблицы
@@ -605,7 +608,7 @@ class BaseMigrator:
         tmp_table_lst = table_name.split(".")
         tmp_name = self._db_adapter.quote_table_name(f"{tmp_table_lst[len(tmp_table_lst) - 1]}_pkey")
         table_name = self._db_adapter.quote_table_name(table_name)
-        self._db_adapter.query(f"ALTER TABLE {table_name} ADD CONSTRAINT {tmp_name} PRIMARY KEY ({column_name});")
+        self._exec_query_or_export(f"ALTER TABLE {table_name} ADD CONSTRAINT {tmp_name} PRIMARY KEY ({column_name});")
 
     def drop_primary_key(self, table_name: str, column_name: str):
         """Удалить первичный ключ таблицы
@@ -627,7 +630,7 @@ class BaseMigrator:
         if tmp_p_key_name == "":
             raise Exception(f"[BaseMigrator][drop_primary_key] Not found primary key name for table \"{table_name}\"!")
         table_name = self._db_adapter.quote_table_name(table_name)
-        self._db_adapter.query(f"ALTER TABLE {table_name} DROP CONSTRAINT {self._db_adapter.quote_table_name(tmp_p_key_name)};")
+        self._exec_query_or_export(f"ALTER TABLE {table_name} DROP CONSTRAINT {self._db_adapter.quote_table_name(tmp_p_key_name)};")
 
     def add_foreign_key(self,
                         table_name: str, columns: list,
@@ -682,7 +685,7 @@ class BaseMigrator:
             sql += f" {self.make_reference_action(props['action'])}"
         elif add_next:
             sql += " NO ACTION"
-        self._db_adapter.query(f"{sql};")
+        self._exec_query_or_export(f"{sql};")
 
     def add_foreign_key_p_key(self,
                               table_name: str, column_name: str,
@@ -740,7 +743,7 @@ class BaseMigrator:
         if tmp_name == "":
             raise Exception(f"[BaseMigrator][drop_foreign_key] Not found foreign key for columns \"{columns_names}\"!")
         table_name = self._db_adapter.quote_table_name(table_name)
-        self._db_adapter.query(f"ALTER TABLE {table_name} DROP CONSTRAINT {self._db_adapter.quote_table_name(tmp_name)};")
+        self._exec_query_or_export(f"ALTER TABLE {table_name} DROP CONSTRAINT {self._db_adapter.quote_table_name(tmp_name)};")
 
     def drop_foreign_key_p_key(self, table_name: str, column_name: str):
         """Удалить вторичный ключ таблицы, ссылающийся на первичный ключ другой таблицы
@@ -766,7 +769,7 @@ class BaseMigrator:
             raise Exception("[BaseMigrator][execute] SQL is Empty!")
         if not self._db_adapter:
             raise Exception("[BaseMigrator][execute] Database adapter is None!")
-        self._db_adapter.query(sql)
+        self._exec_query_or_export(sql)
 
     #
     # protected methods:
@@ -806,7 +809,7 @@ class BaseMigrator:
         if args.get('unique', False):
             is_unique = 'UNIQUE'
         table = self._db_adapter.quote_table_name(args['table'])
-        self._db_adapter.query(f"CREATE {is_unique} INDEX {self._db_adapter.quote_table_name(tmp_name)} ON {table} ({tmp_columns_names});")
+        self._exec_query_or_export(f"CREATE {is_unique} INDEX {self._db_adapter.quote_table_name(tmp_name)} ON {table} ({tmp_columns_names});")
 
     def _drop_index_protected(self, args: dict):
         """Удалить индекс у таблицы
@@ -850,7 +853,7 @@ class BaseMigrator:
         sql += f" {tmp_name}"
         if args.get('cascade', False):
             sql += " CASCADE"
-        self._db_adapter.query(f"{sql};")
+        self._exec_query_or_export(f"{sql};")
 
     def _prepare_create_table(self, name: str, args: dict) -> str:
         """Подготовить SQL для метода CREATE TABLE
@@ -969,3 +972,34 @@ class BaseMigrator:
         z = x.copy()  # start with keys and values of x
         z.update(y)  # modifies z with keys and values of y
         return z
+
+    def __is_export(self) -> bool:
+        """Используется ли экспортирование миграции
+        """
+
+        if not self._export_file:
+            return False
+        return True
+
+    def __export(self, sql: str):
+        """Сохранить SQL миграции в файл
+
+        :param sql: SQL данные
+        """
+
+        if not self.__is_export():
+            return
+        with open(self._export_file, 'a') as f:
+            f.write(Helper.text_left_strip(sql, True))
+            f.write("\n")
+
+    def _exec_query_or_export(self, sql: str):
+        """Выполнить в БД или сохранить SQL миграцию в файл
+
+        :param sql: SQL данные
+        """
+
+        if self.__is_export():
+            self.__export(sql)
+        else:
+            self._db_adapter.query(sql)

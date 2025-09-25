@@ -4,8 +4,8 @@ from src.Migration.Migrators.BaseMigrator import BaseMigrator
 
 
 class SQLiteMigrator(BaseMigrator):
-    def __init__(self, db_adapter):
-        super().__init__(db_adapter)
+    def __init__(self, db_adapter, export_file: str = None):
+        super().__init__(db_adapter, export_file)
 
     #
     # base methods to override if needed:
@@ -287,7 +287,7 @@ class SQLiteMigrator(BaseMigrator):
         sql = tmp_res.get('sql', '')
         if sql == '':
             raise Exception("[SQLiteMigrator][add_column] Prepare create column return empty result!")
-        self._db_adapter.query(f"ALTER TABLE \"{table_name}\" ADD {sql};")
+        self._exec_query_or_export(f"ALTER TABLE \"{table_name}\" ADD {sql};")
 
     def change_column(self, table_name: str, column_name: str, new_type: str, props: dict = {}):
         """Изменить тип колонки и ее дополнительные параметры, если они заданы
@@ -375,14 +375,14 @@ class SQLiteMigrator(BaseMigrator):
 
         # rename old table
         new_t_name = f"{table_name}_old"
-        self._db_adapter.query(f"ALTER TABLE \"{table_name}\" RENAME TO \"{new_t_name}\";")
+        self._exec_query_or_export(f"ALTER TABLE \"{table_name}\" RENAME TO \"{new_t_name}\";")
         # create new table
-        self._db_adapter.query(new_sql)
+        self._exec_query_or_export(new_sql)
         # insert new data
         if tmp_columns != "":
-            self._db_adapter.query(f"INSERT INTO \"{table_name}\" SELECT {tmp_columns} FROM \"{new_t_name}\";")
+            self._exec_query_or_export(f"INSERT INTO \"{table_name}\" SELECT {tmp_columns} FROM \"{new_t_name}\";")
         # drop old table
-        self._db_adapter.query(f"DROP TABLE \"{new_t_name}\";")
+        self._exec_query_or_export(f"DROP TABLE \"{new_t_name}\";")
         # append indexes
         tmp_indexes_upd = self.table_indexes(table_name)
         for index in tmp_indexes.values():
@@ -471,14 +471,14 @@ class SQLiteMigrator(BaseMigrator):
 
         # rename old table
         new_t_name = f"{table_name}_old"
-        self._db_adapter.query(f"ALTER TABLE \"{table_name}\" RENAME TO \"{new_t_name}\";")
+        self._exec_query_or_export(f"ALTER TABLE \"{table_name}\" RENAME TO \"{new_t_name}\";")
         # create new table
-        self._db_adapter.query(new_sql)
+        self._exec_query_or_export(new_sql)
         # insert new data
         if tmp_columns_names != "":
-            self._db_adapter.query(f"INSERT INTO \"{table_name}\" SELECT {tmp_columns_names} FROM \"{new_t_name}\";")
+            self._exec_query_or_export(f"INSERT INTO \"{table_name}\" SELECT {tmp_columns_names} FROM \"{new_t_name}\";")
         # drop old table
-        self._db_adapter.query(f"DROP TABLE \"{new_t_name}\";")
+        self._exec_query_or_export(f"DROP TABLE \"{new_t_name}\";")
         # append indexes
         tmp_indexes_upd = self.table_indexes(table_name)
         for index in tmp_indexes.values():
@@ -567,14 +567,14 @@ class SQLiteMigrator(BaseMigrator):
 
         # rename old table
         new_t_name = f"{table_name}_old"
-        self._db_adapter.query(f"ALTER TABLE \"{table_name}\" RENAME TO \"{new_t_name}\";")
+        self._exec_query_or_export(f"ALTER TABLE \"{table_name}\" RENAME TO \"{new_t_name}\";")
         # create new table
-        self._db_adapter.query(new_sql)
+        self._exec_query_or_export(new_sql)
         # insert new data
         if tmp_columns_names != "":
-            self._db_adapter.query(f"INSERT INTO \"{table_name}\" SELECT {tmp_columns_names} FROM \"{new_t_name}\";")
+            self._exec_query_or_export(f"INSERT INTO \"{table_name}\" SELECT {tmp_columns_names} FROM \"{new_t_name}\";")
         # drop old table
-        self._db_adapter.query(f"DROP TABLE \"{new_t_name}\";")
+        self._exec_query_or_export(f"DROP TABLE \"{new_t_name}\";")
         # append indexes
         tmp_indexes_upd = self.table_indexes(table_name)
         for index in tmp_indexes.values():
@@ -656,14 +656,14 @@ class SQLiteMigrator(BaseMigrator):
 
         # rename old table
         new_t_name = f"{table_name}_old"
-        self._db_adapter.query(f"ALTER TABLE \"{table_name}\" RENAME TO \"{new_t_name}\";")
+        self._exec_query_or_export(f"ALTER TABLE \"{table_name}\" RENAME TO \"{new_t_name}\";")
         # create new table
-        self._db_adapter.query(new_sql)
+        self._exec_query_or_export(new_sql)
         # insert new data
         if tmp_columns != "":
-            self._db_adapter.query(f"INSERT INTO \"{table_name}\" SELECT {tmp_columns} FROM \"{new_t_name}\";")
+            self._exec_query_or_export(f"INSERT INTO \"{table_name}\" SELECT {tmp_columns} FROM \"{new_t_name}\";")
         # drop old table
-        self._db_adapter.query(f"DROP TABLE \"{new_t_name}\";")
+        self._exec_query_or_export(f"DROP TABLE \"{new_t_name}\";")
 
     def rename_index(self, table_name: str, old_name: str, new_name: str):
         """Переименовать индекс для таблицы
@@ -777,14 +777,14 @@ class SQLiteMigrator(BaseMigrator):
 
         # rename old table
         new_t_name = f"{table_name}_old"
-        self._db_adapter.query(f"ALTER TABLE \"{table_name}\" RENAME TO \"{new_t_name}\";")
+        self._exec_query_or_export(f"ALTER TABLE \"{table_name}\" RENAME TO \"{new_t_name}\";")
         # create new table
-        self._db_adapter.query(new_sql)
+        self._exec_query_or_export(new_sql)
         # insert new data
         if tmp_columns != "":
-            self._db_adapter.query(f"INSERT INTO \"{table_name}\" SELECT {tmp_columns_names} FROM \"{new_t_name}\";")
+            self._exec_query_or_export(f"INSERT INTO \"{table_name}\" SELECT {tmp_columns_names} FROM \"{new_t_name}\";")
         # drop old table
-        self._db_adapter.query(f"DROP TABLE \"{new_t_name}\";")
+        self._exec_query_or_export(f"DROP TABLE \"{new_t_name}\";")
         # append indexes
         tmp_indexes_upd = self.table_indexes(table_name)
         for index in tmp_indexes.values():
@@ -883,14 +883,14 @@ class SQLiteMigrator(BaseMigrator):
 
         # rename old table
         new_t_name = f"{table_name}_old"
-        self._db_adapter.query(f"ALTER TABLE \"{table_name}\" RENAME TO \"{new_t_name}\";")
+        self._exec_query_or_export(f"ALTER TABLE \"{table_name}\" RENAME TO \"{new_t_name}\";")
         # create new table
-        self._db_adapter.query(new_sql)
+        self._exec_query_or_export(new_sql)
         # insert new data
         if tmp_columns != "":
-            self._db_adapter.query(f"INSERT INTO \"{table_name}\" SELECT {tmp_columns_names} FROM \"{new_t_name}\";")
+            self._exec_query_or_export(f"INSERT INTO \"{table_name}\" SELECT {tmp_columns_names} FROM \"{new_t_name}\";")
         # drop old table
-        self._db_adapter.query(f"DROP TABLE \"{new_t_name}\";")
+        self._exec_query_or_export(f"DROP TABLE \"{new_t_name}\";")
         # append indexes
         tmp_indexes_upd = self.table_indexes(table_name)
         for index in tmp_indexes.values():
@@ -1016,14 +1016,14 @@ class SQLiteMigrator(BaseMigrator):
 
         # rename old table
         new_t_name = f"{table_name}_old"
-        self._db_adapter.query(f"ALTER TABLE \"{table_name}\" RENAME TO \"{new_t_name}\";")
+        self._exec_query_or_export(f"ALTER TABLE \"{table_name}\" RENAME TO \"{new_t_name}\";")
         # create new table
-        self._db_adapter.query(new_sql)
+        self._exec_query_or_export(new_sql)
         # insert new data
         if tmp_columns != "":
-            self._db_adapter.query(f"INSERT INTO \"{table_name}\" SELECT {tmp_columns_names} FROM \"{new_t_name}\";")
+            self._exec_query_or_export(f"INSERT INTO \"{table_name}\" SELECT {tmp_columns_names} FROM \"{new_t_name}\";")
         # drop old table
-        self._db_adapter.query(f"DROP TABLE \"{new_t_name}\";")
+        self._exec_query_or_export(f"DROP TABLE \"{new_t_name}\";")
         # append indexes
         tmp_indexes_upd = self.table_indexes(table_name)
         for index in tmp_indexes.values():
@@ -1127,14 +1127,14 @@ class SQLiteMigrator(BaseMigrator):
 
         # rename old table
         new_t_name = f"{table_name}_old"
-        self._db_adapter.query(f"ALTER TABLE \"{table_name}\" RENAME TO \"{new_t_name}\";")
+        self._exec_query_or_export(f"ALTER TABLE \"{table_name}\" RENAME TO \"{new_t_name}\";")
         # create new table
-        self._db_adapter.query(new_sql)
+        self._exec_query_or_export(new_sql)
         # insert new data
         if tmp_columns != "":
-            self._db_adapter.query(f"INSERT INTO \"{table_name}\" SELECT {tmp_columns_names} FROM \"{new_t_name}\";")
+            self._exec_query_or_export(f"INSERT INTO \"{table_name}\" SELECT {tmp_columns_names} FROM \"{new_t_name}\";")
         # drop old table
-        self._db_adapter.query(f"DROP TABLE \"{new_t_name}\";")
+        self._exec_query_or_export(f"DROP TABLE \"{new_t_name}\";")
         # append indexes
         tmp_indexes_upd = self.table_indexes(table_name)
         for index in tmp_indexes.values():
@@ -1208,7 +1208,7 @@ class SQLiteMigrator(BaseMigrator):
             tmp_name = f"{table_lst[len(table_lst) - 1]}_{tmp_columns_names}_index"
         if 'name' in args:
             tmp_name = args['name']
-        self._db_adapter.query(f"DROP INDEX \"{tmp_name}\"")
+        self._exec_query_or_export(f"DROP INDEX \"{tmp_name}\"")
 
     def __prepare_default(self, default):
         """Получить значение секции default без кавычек

@@ -3,8 +3,8 @@ from src.Migration.Migrators.BaseMigrator import BaseMigrator
 
 
 class PostgreSQLMigrator(BaseMigrator):
-    def __init__(self, db_adapter):
-        super().__init__(db_adapter)
+    def __init__(self, db_adapter, export_file: str = None):
+        super().__init__(db_adapter, export_file)
 
     def create_database(self, name: str, props: dict = {}):
         """Создать новую базу данных
@@ -45,7 +45,7 @@ class PostgreSQLMigrator(BaseMigrator):
             str_option += f" TABLESPACE = \"{str(props.get('tablespace', ''))}\""
         if str(props.get('connection_limit', '')) != "":
             str_option += f" CONNECTION LIMIT = {str(int(props.get('connection_limit', 0)))}"
-        self._db_adapter.query(f"CREATE DATABASE \"{name}\" {str_option};")
+        self._exec_query_or_export(f"CREATE DATABASE \"{name}\" {str_option};")
 
     def drop_database(self, name: str):
         """Удалить базу данных
@@ -58,7 +58,7 @@ class PostgreSQLMigrator(BaseMigrator):
             raise Exception("[PostgreSQLMigrator][drop_database] Database name is Empty!")
         if not self._db_adapter:
             raise Exception("[PostgreSQLMigrator][drop_database] Database adapter is None!")
-        self._db_adapter.query(f"DROP DATABASE IF EXISTS \"{name}\";")
+        self._exec_query_or_export(f"DROP DATABASE IF EXISTS \"{name}\";")
 
     def create_extension(self, name: str, props: dict = {}):
         """Подключить расширение базы данных
@@ -79,7 +79,7 @@ class PostgreSQLMigrator(BaseMigrator):
         if_not_exists = ""
         if props.get('if_not_exists', False):
             if_not_exists = 'IF NOT EXISTS'
-        self._db_adapter.query(f"CREATE EXTENSION {if_not_exists} \"{name}\";")
+        self._exec_query_or_export(f"CREATE EXTENSION {if_not_exists} \"{name}\";")
 
     def drop_extension(self, name: str, props: dict = {}):
         """Удалить расширение базы данных
@@ -100,7 +100,7 @@ class PostgreSQLMigrator(BaseMigrator):
         if_exists = ""
         if props.get('if_exists', False):
             if_exists = 'IF EXISTS'
-        self._db_adapter.query(f"DROP EXTENSION {if_exists} \"{name}\" CASCADE;")
+        self._exec_query_or_export(f"DROP EXTENSION {if_exists} \"{name}\" CASCADE;")
 
     def create_schema(self, name: str, props: dict = {}):
         """Создать новую схему данных
@@ -121,7 +121,7 @@ class PostgreSQLMigrator(BaseMigrator):
         if_not_exists = ""
         if props.get('if_not_exists', False):
             if_not_exists = 'IF NOT EXISTS'
-        self._db_adapter.query(f"CREATE SCHEMA {if_not_exists} \"{name}\";")
+        self._exec_query_or_export(f"CREATE SCHEMA {if_not_exists} \"{name}\";")
 
     def drop_schema(self, name: str, props: dict = {}):
         """Удалить схему данных
@@ -142,7 +142,7 @@ class PostgreSQLMigrator(BaseMigrator):
         if_exists = ""
         if props.get('if_exists', False):
             if_exists = 'IF EXISTS'
-        self._db_adapter.query(f"DROP SCHEMA {if_exists} \"{name}\" CASCADE;")
+        self._exec_query_or_export(f"DROP SCHEMA {if_exists} \"{name}\" CASCADE;")
 
     def table_indexes(self, table_name: str) -> dict:
         """Запросить список индексов для таблицы
@@ -477,7 +477,7 @@ class PostgreSQLMigrator(BaseMigrator):
         # for postgresql without scheme name
         tmp_new_name = f"\"{self.__name_without_scheme_name(new_name)}\""
         # exec query
-        self._db_adapter.query(f"ALTER TABLE {tmp_name} RENAME TO {tmp_new_name};")
+        self._exec_query_or_export(f"ALTER TABLE {tmp_name} RENAME TO {tmp_new_name};")
         for k, v in tmp_indexes.items():
             index_new_name = str(v['index_name']).replace(name, new_name)
             if str(v['index_name']) == index_new_name:
@@ -505,7 +505,7 @@ class PostgreSQLMigrator(BaseMigrator):
             raise Exception("[PostgreSQLMigrator][rename_index] Scheme name in old name is not equal table scheme name!")
         tmp_old_name = self._db_adapter.quote_table_name(self.__name_with_scheme_name(old_name, old_name_scheme_name))
         tmp_new_name = f"\"{self.__name_without_scheme_name(new_name)}\""
-        self._db_adapter.query(f"ALTER INDEX {tmp_old_name} RENAME TO {tmp_new_name};")
+        self._exec_query_or_export(f"ALTER INDEX {tmp_old_name} RENAME TO {tmp_new_name};")
 
     def _drop_index_protected(self, args: dict):
         """Удалить индекс у таблицы
@@ -555,7 +555,7 @@ class PostgreSQLMigrator(BaseMigrator):
         sql += f" {tmp_name}"
         if args.get('cascade', False):
             sql += " CASCADE"
-        self._db_adapter.query(f"{sql};")
+        self._exec_query_or_export(f"{sql};")
 
     def add_foreign_key(self,
                         table_name: str, columns: list,
@@ -610,7 +610,7 @@ class PostgreSQLMigrator(BaseMigrator):
             sql += f" {self.make_reference_action(props['action'])}"
         elif add_next:
             sql += " NO ACTION"
-        self._db_adapter.query(f"{sql};")
+        self._exec_query_or_export(f"{sql};")
 
     def __parse_table_index(self, table_name: str, name: str, row: str) -> dict:
         """Разобрать строку SQL по созданию индекса для получения аргументов
