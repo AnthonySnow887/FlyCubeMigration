@@ -191,7 +191,7 @@ then
 fi
 
 # Check migration files
-num_migrations=`ls -l | grep ".sql$" | wc -l`
+num_migrations=`ls -l $dir | grep ".sql$" | wc -l`
 if [ $num_migrations -eq 0 ]
 then
     printf "\nNot found sql migrations in directory!"
@@ -254,7 +254,7 @@ if [[ -n "$db_pass" ]]
 then
     export PGPASSWORD=$db_pass
 fi
-exit 0
+
 # get current database version
 current_db_version="$(get_current_db_version "$db_host_arg" "$db_name" "$db_user")"
 printf "\nCurrent database version: $current_db_version"

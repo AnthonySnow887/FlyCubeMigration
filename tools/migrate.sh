@@ -166,7 +166,7 @@ then
 fi
 
 # Check migration files
-num_migrations=`ls -l | grep ".sql$" | wc -l`
+num_migrations=`ls -l $dir | grep ".sql$" | wc -l`
 if [ $num_migrations -eq 0 ]
 then
     printf "\nNot found sql migrations in directory!"
