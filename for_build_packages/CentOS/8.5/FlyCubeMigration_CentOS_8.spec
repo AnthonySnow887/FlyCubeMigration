@@ -60,4 +60,12 @@ rm /usr/bin/fly-cube-migration
 %defattr(-,root,root, 755)
 /usr/local/FlyCubeMigration/
 
+%changelog
+* Thu Sep 25 2025 AnthonySnow887 <AnthonySnow887@build> 1.2.0-1
+- Release version 1.2.0
 
+* Tue Nov 14 2023 AnthonySnow887 <AnthonySnow887@build> 1.1.0-1
+- Release version 1.1.0
+
+* Tue Oct 24 2023 AnthonySnow887 <AnthonySnow887@build> 1.0.2-2
+- First release version 1.0.2
