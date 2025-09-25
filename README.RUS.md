@@ -22,15 +22,13 @@ POST-скрипты представляют собой стандартные S
 Данный механизм позволяет использовать штатные консольные утилиты базы данных для установки или удаления миграций без необходимости использования всех требуемых python3 библиотек и инструментов.
 
 
-Поддерживаемые СУБД
--------------------
+## Поддерживаемые СУБД
 
 - SQLite 3;
 - PostgreSQL 9.6 or later.
 - MySQL/MariaDB (tested on MariaDB 10.2.36)
 
-Операционные системы, на которых проводилось тестирование
----------------------------------------------------------
+## Операционные системы, на которых проводилось тестирование
 
 - Alma Linux 9.1
 - Alt Linux 8.1 and later
@@ -42,31 +40,26 @@ POST-скрипты представляют собой стандартные S
 - Rosa Linux 12.4
 - Ubuntu 20.04 and later
 
-Базовые системные требования
-----------------------------
+## Базовые системные требования
 
 - python >= 3.6
 
-Дополнительные зависимые Python модули
---------------------------------------
+## Дополнительные зависимые Python модули
 
 - python3-psycopg2
 - python3-mysql-connector-python
 - python3-PyYAML
 - python3-requests
 
-Релизы
-------
+## Релизы
 
 Релизы FlyCubeMigration доступны на [Github](https://github.com/AnthonySnow887/FlyCubeMigration/releases).
 
-Лицензия
---------
+## Лицензия
 
 FlyCubeMigration распространяется под лицензией GPL-3.0. Подробности смотрите в файле LICENSE.
 
-Использование
--------------
+## Использование
 
 ```bash
 FlyCubeMigration> ./fly-cube-migration --help
@@ -169,8 +162,7 @@ Examples:
      ./fly-cube-migration --db-migrate-redo --step=3
 ```
 
-Быстрый старт
--------------
+## Быстрый старт
 
 Для начала работы с FlyCubeMigration создайте новый проект командой:
 ```bash
@@ -188,8 +180,7 @@ $> ./fly-cube-migration --new-project --name=MyProject
 === FlyCubeMigration =========================
 ```
 
-Файл конфигурации FlyCubeMigration
-----------------------------------
+## Файл конфигурации FlyCubeMigration
 
 Файл конфигурации должен находиться в каталоге ```config/``` и его имя должно совпадать с ```fly-cube-migration.yml```.
 Полный путь к файлу: ```config/fly-cube-migration.yml```
@@ -260,8 +251,7 @@ FLY_CUBE_MIGRATION_CONFIG_DIR: "config/"
 FLY_CUBE_MIGRATION_DB_MIGRATIONS_DIR: "db/migrate/"
 ```
  
-Конфигурационный файл для доступа к СУБД
-----------------------------------------
+## Конфигурационный файл для доступа к СУБД
 
 По умолчанию файл конфигурации базы данных находится в каталоге ```config/``` и его имя должно совпадать с ```database.yml```.
 Полный путь к файлу: ```config/database.yml```
@@ -381,8 +371,7 @@ development_secondary:
 #  test-2: *default_postgresql_unix_dev
 ```
 
-Конфигурационный файл POST-скриптов
------------------------------------
+## Конфигурационный файл POST-скриптов
 
 POST-скрипты представляют собой стандартные SQL скрипты, расположенные в одном или нескольких каталогах, и содержащие общие для всех миграций команды.
 POST-скрипты позволяют автоматизировать рутинные действия, необходимые после выполнения установки/переустановки/удаления миграций.
@@ -472,8 +461,7 @@ development:
  - [str|list]   directory                   - содержит путь/список путей до каталогов с SQL скриптами
 
 
-Миграции - описание
--------------------
+## Миграции - описание
 
 Миграции — это удобный способ управления структурой вашей базы данных. Как и Ruby on Rails, 
 система миграции FlyCubeMigration предоставляет широкий набор методов для работы со схемой базы данных.
@@ -590,13 +578,11 @@ class ExampleMigration(BaseMigration):
         return 
 ```
 
-Миграции - примеры
-------------------
+## Миграции - примеры
 
 Ниже приведены примеры использования различных методов миграций.
 
-Create/Drop Extension
----------------------
+### Create/Drop Extension
 
 Методы ```create_extension``` и ```drop_extension``` позволяют включить (или отключить) необходимое расширение базы данных.
 
@@ -629,8 +615,7 @@ class CreateExtension(BaseMigration):
         self.drop_extension('uuid-ossp', {'if_exists': True})
 ```
 
-Create/Drop Schema
-------------------
+### Create/Drop Schema
 
 Методы ```create_schema``` и ```drop_schema``` позволяют создать (или удалить) новую схему данных.
 
@@ -663,8 +648,7 @@ class CreateSchema(BaseMigration):
         self.drop_schema('test_schema', {'if_exists': True})
 ```
 
-Create table
-------------
+### Create table
 
 Метод ```create_table``` позволяет создать новую таблицу в базе данных.
 
@@ -738,8 +722,7 @@ CREATE TABLE test_schema.test_table
 )
 ```
 
-Rename table
-------------
+### Rename table
 
 Метод ```rename_table``` позволяет переименовать таблицу.
 
@@ -756,8 +739,7 @@ class RenameTable(BaseMigration):
         self.rename_table('test_schema.test_table_renamed', 'test_schema.test_table')
 ```
 
-Drop table
-----------
+### Drop table
 
 Метод ```drop_table``` позволяет удалить ранее созданную таблицу.
 
@@ -774,8 +756,7 @@ class DropTable(BaseMigration):
         return 
 ```
 
-Add column
-----------
+### Add column
 
 Метод ```add_column``` позволяет добавить новый столбец в ранее созданную таблицу.
 
@@ -805,8 +786,7 @@ class AddColumn(BaseMigration):
         self.drop_column('test_schema.test_table_renamed', 'my_new_column')
 ```
 
-Rename column
--------------
+### Rename column
 
 Метод ```rename_column``` позволяет переименовать столбец в таблице.
 
@@ -828,8 +808,7 @@ class RenameColumn(BaseMigration):
         self.rename_column('test_schema.test_table_renamed', 'my_new_column_renamed', 'my_new_column')
 ```
 
-Change column
--------------
+### Change column
 
 Метод ```change_column``` позволяет изменить тип столбца и его дополнительные параметры, если они заданы.
 
@@ -859,8 +838,7 @@ class ChangeColumn(BaseMigration):
         })
 ```
 
-Change column default
----------------------
+### Change column default
 
 Метод ```change_column_default``` позволяет изменить/удалить свойство ```DEFAULT``` столбца таблицы.
 
@@ -886,8 +864,7 @@ class ChangeColumnDefault(BaseMigration):
         self.change_column_default('test_schema.test_table_renamed', 'my_new_column_renamed', '---???---')
 ```
 
-Change column null
-------------------
+### Change column null
 
 Метод ```change_column_null``` позволяет добавить/удалить свойство ```NOT NULL``` столбца таблицы.
 
@@ -913,8 +890,7 @@ class ChangeColumnNull(BaseMigration):
         self.change_column_null('test_schema.test_table_renamed', 'my_new_column_renamed', True)
 ```
 
-Drop column
------------
+### Drop column
 
 Метод ```drop_column``` позволяет удалить столбец из таблицы.
 
@@ -931,8 +907,7 @@ class DropColumn(BaseMigration):
         return 
 ```
 
-Add index
----------
+### Add index
 
 Метод ```add_index``` позволяет добавить индекс для таблицы.
 
@@ -971,8 +946,7 @@ class AddIndex(BaseMigration):
         self.drop_table('test_schema.test_table_2')
 ```
 
-Rename index
-------------
+### Rename index
 
 Метод ```rename_index``` позволяет переименовать индекс для таблицы.
 
@@ -994,8 +968,7 @@ class RenameIndex(BaseMigration):
         self.rename_index('test_schema.test_table_2', 'my_test_index_renamed', 'my_test_index')
 ```
 
-Drop index
-----------
+### Drop index
 
 Метод ```drop_index``` позволяет удалить индекс таблицы.
 
@@ -1026,8 +999,7 @@ class DropIndex(BaseMigration):
         self.add_index('test_schema.test_table_2', ['my_id_2'])
 ```
 
-Set/Drop primary key
---------------------
+### Set/Drop primary key
 
 Методы ```set_primary_key``` и ```drop_primary_key``` позволяют установить (или удалить) новый первичный ключ таблицы.
 
@@ -1048,8 +1020,7 @@ class SetPrimaryKey(BaseMigration):
         self.drop_primary_key('test_schema.test_table_2', 'my_id')
 ```
 
-Add/Drop foreign key
---------------------
+### Add/Drop foreign key
 
 Методы ```add_foreign_key``` и ```drop_foreign_key``` позволяют добавить (или удалить) внешний (вторичный) ключ для таблицы.
 
@@ -1084,8 +1055,7 @@ class AddForeignKey(BaseMigration):
         self.drop_foreign_key('test_schema.test_table_2', ['my_id_2'])
 ```
 
-Add/Drop foreign key p_key
---------------------------
+### Add/Drop foreign key p_key
 
 Методы ```add_foreign_key_p_key``` и ```drop_foreign_key_p_key``` позволяют добавить (или удалить) внешний ключ для таблицы, 
 который ссылается на первичный ключ другой таблицы.
@@ -1138,8 +1108,7 @@ class AddForeignKeyPKey(BaseMigration):
         self.drop_table('test_schema.test_table_3')
 ```
 
-Execution of any SQL query
---------------------------
+### Execution of any SQL query
 
 Метод ```execute``` позволяет выполнить любой SQL-запрос.
 
@@ -1163,8 +1132,7 @@ class ExecuteSQL(BaseMigration):
         self.execute("DROP TABLE my_test_table;")
 ```
 
-Выгрузка файлов миграций в SQL-файлы
-------------------------------------
+## Выгрузка файлов миграций в SQL-файлы
 
 Для выгрузки файлов миграций в SQL-файлы с версии 1.2.0 добавлены следующие методы:
   - ```--db-migrate-export```     - Выгрузить миграции для всех баз данных (секция: up)
@@ -1198,8 +1166,7 @@ class ExecuteSQL(BaseMigration):
   - ```migrate.sh```    - скрипт установки миграций в базу данных
   - ```rollback.sh```   - скрипт удаления миграций из базы данных
 
-Команда: --db-migrate-export
-============================
+### Команда: --db-migrate-export
 
 ```bash
 $> ./fly-cube-migration --db-migrate-export
@@ -1237,8 +1204,7 @@ Env type: Development
 === FlyCubeMigration =====================
 ```
 
-Установка SQL-миграций скриптом migrate.sh
-==========================================
+### Установка SQL-миграций скриптом migrate.sh
 
 ```bash
 $> sh tools/migrate.sh -h
@@ -1269,8 +1235,7 @@ Migrate finished
 New database version: 20250820171933
 ```
 
-Команда: --db-rollback-export
-=============================
+### Команда: --db-rollback-export
 
 ```bash
 $> ./fly-cube-migration --db-rollback-export
@@ -1308,8 +1273,7 @@ Env type: Development
 === FlyCubeMigration =====================
 ```
 
-Удаление SQL-миграций скриптом rollback.sh
-==========================================
+### Удаление SQL-миграций скриптом rollback.sh
 
 ```bash
 $> sh tools/rollback.sh -h
@@ -1343,13 +1307,11 @@ Rollback finished
 New database version: 20250806151343
 ```
 
-Примеры работы приложения
--------------------------
+## Примеры работы приложения
 
 Ниже приведены примеры выполнения различных команд приложения.
 
-Команда: --db-migrate-status
-----------------------------
+### Команда: --db-migrate-status
 
 ```bash
 $> ./fly-cube-migration --db-migrate-status
@@ -1379,8 +1341,7 @@ Env type: Development
 === FlyCubeMigration =====================
 ```
 
-Команда: --db-migrate
----------------------
+### Команда: --db-migrate
 
 ```bash
 $> ./fly-cube-migration --db-migrate
@@ -1413,8 +1374,7 @@ Env type: Development
 === FlyCubeMigration =====================
 ```
 
-Команда: --db-rollback
-----------------------
+### Команда: --db-rollback
 
 ```bash
 $> ./fly-cube-migration --db-rollback
@@ -1433,8 +1393,7 @@ Env type: Development
 === FlyCubeMigration =====================
 ```
 
-Команда: --db-rollback-all
---------------------------
+### Команда: --db-rollback-all
 
 ```bash
 $> ./fly-cube-migration --db-rollback-all
@@ -1467,8 +1426,7 @@ Env type: Development
 === FlyCubeMigration =====================
 ```
 
-Команда: --make-migration-number
---------------------------------
+### Команда: --make-migration-number
 
 ```bash
 $> ./fly-cube-migration --make-migration-number
