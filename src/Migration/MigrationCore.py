@@ -312,6 +312,7 @@ class MigrationCore:
         mirgations = Helper.sort(self.__migrations, True)
         print(f"[MigrationsCore] Start rollback from {current_version}:")
         new_version = -1
+        save_version_in_db = False
         changed_databases = []
         for k, m in mirgations.items():
             # configuration current migration
@@ -338,6 +339,11 @@ class MigrationCore:
             if migrator_name == "":
                 print(ConsoleLogger.instance().make_color_string(f"[MigrationsCore] Invalid current migrator name for database adapter (name: {db_adapter_name})!", 'error'))
                 return
+            # check save version in db
+            if save_version_in_db:
+                self.__append_migration_version(m_database, m_version)
+                save_version_in_db = False
+
             # select current migration database version
             current_db_version = self.__last_migration_version(m_database)
             # check steps
@@ -363,6 +369,10 @@ class MigrationCore:
 
             new_version = m_version
             self.__remove_migration_version(m_database, new_version)
+            # check is remove all versions
+            tmp_current_db_version = self.__last_migration_version(m_database)
+            if tmp_current_db_version == 0:
+                save_version_in_db = True
             step -= 1
 
         print("[MigrationsCore] Finish rollback")
