@@ -20,7 +20,7 @@ from src.Settings.Settings import Settings
 from src.PostScripts.PostScripts import PostScripts
 from src.TemplateCompiler.TemplateCompiler import TemplateCompiler
 
-version = "1.2.0"
+version = "1.2.1"
 url_fly_cube_migration_latest = "https://api.github.com/repos/AnthonySnow887/FlyCubeMigration/releases/latest"
 
 
@@ -132,7 +132,7 @@ def select_latest_version() -> str:
     if len(json_data.keys()) == 0:
         return "?.?.?"
     tag_name = json_data.get('tag_name', '?.?.?')
-    result = re.search('^v(\d.\d.\d)$', tag_name)
+    result = re.search(r'^v(\d.\d.\d)$', tag_name)
     if not result:
         return "?.?.?"
     return result.group(1)
@@ -199,7 +199,8 @@ def create_new_project(cmd, value):
     tc.append_help_param('PROJECT_PATH', m_dir)
 
     # - 1 -
-    m_data = tc.compile(Helper.read_file(os.path.dirname(os.path.realpath(__file__)) + "/templates/fly-cube-migration.yml.tmpl"))
+    m_data = tc.compile(
+        Helper.read_file(os.path.dirname(os.path.realpath(__file__)) + "/templates/fly-cube-migration.yml.tmpl"))
     with open(f"{m_dir}/config/fly-cube-migration.yml", 'w') as f:
         f.write(m_data)
         print(f"[Created] {m_dir}/config/fly-cube-migration.yml")
@@ -209,7 +210,8 @@ def create_new_project(cmd, value):
         f.write(m_data)
         print(f"[Created] {m_dir}/config/database.yml")
     # - 3 -
-    m_data = tc.compile(Helper.read_file(os.path.dirname(os.path.realpath(__file__)) + "/templates/post-scripts.yml.tmpl"))
+    m_data = tc.compile(
+        Helper.read_file(os.path.dirname(os.path.realpath(__file__)) + "/templates/post-scripts.yml.tmpl"))
     with open(f"{m_dir}/config/post-scripts.yml", 'w') as f:
         f.write(m_data)
         print(f"[Created] {m_dir}/config/post-scripts.yml")
@@ -394,6 +396,7 @@ def db_rollback_export(cmd, value):
     MigrationCore.instance().migrate_export(db_names, m_version, m_dir)
     print("")
     print("=== FlyCubeMigration =====================\r\n")
+
 
 def db_rollback(cmd, value):
     # init core
@@ -1041,12 +1044,15 @@ def main():
     })
 
     # append examples:
-    ConsoleHelper.instance().append_example('Set FlyCubeMigration config directory (\'--config-dir\' is grouped with all the commands listed below)',
-                                            f"{ConsoleHelper.application_file()} --config-dir=../test/config/ [Other Commands]")
-    ConsoleHelper.instance().append_example('Set current environment (\'--env\' is grouped with all the commands listed below)',
-                                            f"{ConsoleHelper.application_file()} --env=production [Other Commands]")
-    ConsoleHelper.instance().append_example('Show sql output (\'--output\' is grouped with all the commands listed below)',
-                                            f"{ConsoleHelper.application_file()} --output=true [Other Commands]")
+    ConsoleHelper.instance().append_example(
+        'Set FlyCubeMigration config directory (\'--config-dir\' is grouped with all the commands listed below)',
+        f"{ConsoleHelper.application_file()} --config-dir=../test/config/ [Other Commands]")
+    ConsoleHelper.instance().append_example(
+        'Set current environment (\'--env\' is grouped with all the commands listed below)',
+        f"{ConsoleHelper.application_file()} --env=production [Other Commands]")
+    ConsoleHelper.instance().append_example(
+        'Show sql output (\'--output\' is grouped with all the commands listed below)',
+        f"{ConsoleHelper.application_file()} --output=true [Other Commands]")
     ConsoleHelper.instance().append_example('Create new FlyCubeMigration project',
                                             f"{ConsoleHelper.application_file()} --new-project --name=ExampleProject")
     ConsoleHelper.instance().append_example('Create new migration',

@@ -109,7 +109,7 @@ class MySQLAdapter(BaseDatabaseAdapter):
         for r in res:
             if r['Variable_name'] != 'version':
                 continue
-            result = re.search('^(\d+\.)?(\d+\.)?(\*|\d+)', r['Value'])
+            result = re.search(r'^(\d+\.)?(\d+\.)?(\*|\d+)', r['Value'])
             if result:
                 return result.group(0)
             return r['Value']
