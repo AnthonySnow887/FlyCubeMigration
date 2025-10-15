@@ -82,7 +82,7 @@ class TemplateCompiler:
             ![This is Lu and Bryu!]( {{ image_path ('configure.svg') }} "Lu and Bryu")
         """
 
-        matches = re.findall('(\{([\{\#])\s*([\w]+)\s*\(\s*([A-Za-z0-9_\ \-\,\.\'\"\{\}\[\]\:\/]*)\s*\)\s*([\}\#])\})',
+        matches = re.findall(r'(\{([\{\#])\s*([\w]+)\s*\(\s*([A-Za-z0-9_\ \-\,\.\'\"\{\}\[\]\:\/]*)\s*\)\s*([\}\#])\})',
                              data)
         if len(matches) == 0:
             return ""
@@ -130,7 +130,7 @@ class TemplateCompiler:
             Key: {{ my_key }}
         """
 
-        matches = re.findall('(\{([\{\#])\s{0,}([\w]+)\s{0,}([\}\#])\})', data)
+        matches = re.findall(r'(\{([\{\#])\s{0,}([\w]+)\s{0,}([\}\#])\})', data)
         if len(matches) == 0:
             return ""
         is_changed = False
@@ -237,11 +237,11 @@ class TemplateCompiler:
         if len(r) > 0:
             return float(r[0])
         # is hash
-        r = re.findall('^\{(.*)\}$', arg)
+        r = re.findall(r'^\{(.*)\}$', arg)
         if len(r) > 0:
             return json.loads(arg)
         # is array
-        r = re.findall('^\[(.*)\]$', arg)
+        r = re.findall(r'^\[(.*)\]$', arg)
         if len(r) > 0:
             return json.loads(arg)
         return None

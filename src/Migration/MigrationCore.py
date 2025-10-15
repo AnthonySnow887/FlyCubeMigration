@@ -55,7 +55,7 @@ class MigrationCore:
             file_extension = Helper.file_extension(f)
             if not file_extension.lower() == ".py":
                 continue
-            result = re.search('^([0-9]{14})_(.*)\.py$', f)
+            result = re.search(r'^([0-9]{14})_(.*)\.py$', f)
             if not result:
                 continue
             migration_version = int(result.group(1))
