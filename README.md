@@ -103,6 +103,8 @@ Options include:
 
   --db-version              Select database(s) migration version
 
+  --db-settings             Show database(s) config settings
+
   --db-migrate-export       Export all database(s) migrations (section: up)
 
   --db-rollback-export      Export all database(s) migrations (section: down)
@@ -1422,6 +1424,25 @@ Env type: Development
 [MigrationsCore] Finish execute post-scripts
 
 === FlyCubeMigration =====================
+```
+
+### Command: --db-settings
+
+```bash
+$> ./fly-cube-migration --db-settings
+
+=== FlyCubeMigration: Database settings ===
+
+Env type: Development
+Database settings:
+  adapter: postgresql
+  database: test
+  host: 127.0.0.1
+  port: 5432
+  username: postgres
+  password: 12345678
+
+=== FlyCubeMigration ======================
 ```
 
 ### Command: --make-migration-number

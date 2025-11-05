@@ -165,6 +165,20 @@ class DatabaseFactory:
 
         return len(self.secondary_databases()) > 0
 
+    def database_settings(self, database: str) -> dict:
+        """Получить массив настроек для подключения к базе данных
+
+        :param database: Название базы данных
+        :returns: Массив настроек для подключения к базе данных
+        :rtype: dict
+        """
+
+        if database == "":
+            return self.__settings
+        if database in self.__secondarySettings:
+            return self.__secondarySettings[database]
+        return {}
+
     def __register_database_adapter(self, name: str, class_name: str):
         """Зарегистрировать адаптер по работе с базой данных
 

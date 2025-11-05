@@ -458,10 +458,12 @@ class MigrationCore:
         for t in tmp_state_lst_sorted.values():
             print(t)
 
-    def db_create(self, db_name: str):
+    def db_create(self, db_name: str) -> int:
         """Создать базу данных для миграций
 
         :param db_name: имя базы данных
+        :returns: Код результата выполнения
+        :rtype: int
         """
 
         db_adapter_name = DatabaseFactory.instance().primary_adapter_name()
@@ -469,43 +471,46 @@ class MigrationCore:
             db_adapter_name = DatabaseFactory.instance().secondary_adapter_name(db_name)
         if db_adapter_name == "":
             print(ConsoleLogger.instance().make_color_string("[MigrationsCore] Invalid current database adapter name!", 'error'))
-            return
+            return 1
         migrator_name = self.__migrator_class_name(db_adapter_name)
         if migrator_name == "":
             print(ConsoleLogger.instance().make_color_string(f"[MigrationsCore] Invalid current migrator name for database adapter (name: {db_adapter_name})!", 'error'))
-            return
+            return 1
         # processing
         # create database
         db_adapter = DatabaseFactory.instance().create_database_adapter({'database': db_name, 'auto-connect': False})
         if not db_adapter:
             print(ConsoleLogger.instance().make_color_string("[MigrationsCore] Invalid database adapter (None)!", 'error'))
-            return
+            return 1
         migrator_ = Helper.lookup(migrator_name, globals())
         migrator = migrator_(db_adapter)
         if not migrator:
             print(ConsoleLogger.instance().make_color_string("[MigrationsCore] Invalid database migrator (None)!", 'error'))
-            return
+            return 1
         db_adapter_settings = db_adapter.settings()
         tmp_db_name = db_adapter_settings.get('database', '')
         if tmp_db_name == "":
             print(ConsoleLogger.instance().make_color_string("[MigrationsCore] Invalid database adapter settings (not found key 'database' or empty value)!", 'error'))
-            return
+            return 1
 
         print(f"[MigrationsCore] Start create database (name: {tmp_db_name})")
         del db_adapter_settings['database']
         db_adapter.set_settings(db_adapter_settings)
         if not db_adapter.connect():
             print(ConsoleLogger.instance().make_color_string("[MigrationsCore] Connect to database server failed!", 'error'))
-            return
+            return 1
         migrator.create_database(tmp_db_name)
         del migrator
         del db_adapter
         print("[MigrationsCore] Finish create database")
+        return 0
 
-    def db_drop(self, db_name: str):
+    def db_drop(self, db_name: str) -> int:
         """Удалить базу данных для миграций
 
         :param db_name: имя базы данных
+        :returns: Код результата выполнения
+        :rtype: int
         """
 
         db_adapter_name = DatabaseFactory.instance().primary_adapter_name()
@@ -513,38 +518,39 @@ class MigrationCore:
             db_adapter_name = DatabaseFactory.instance().secondary_adapter_name(db_name)
         if db_adapter_name == "":
             print(ConsoleLogger.instance().make_color_string("[MigrationsCore] Invalid current database adapter name!", 'error'))
-            return
+            return 1
         migrator_name = self.__migrator_class_name(db_adapter_name)
         if migrator_name == "":
             print(ConsoleLogger.instance().make_color_string(f"[MigrationsCore] Invalid current migrator name for database adapter (name: {db_adapter_name})!", 'error'))
-            return
+            return 1
         # processing
         # create database
         db_adapter = DatabaseFactory.instance().create_database_adapter({'database': db_name, 'auto-connect': False})
         if not db_adapter:
             print(ConsoleLogger.instance().make_color_string("[MigrationsCore] Invalid database adapter (None)!", 'error'))
-            return
+            return 1
         migrator_ = Helper.lookup(migrator_name, globals())
         migrator = migrator_(db_adapter)
         if not migrator:
             print(ConsoleLogger.instance().make_color_string("[MigrationsCore] Invalid database migrator (None)!", 'error'))
-            return
+            return 1
         db_adapter_settings = db_adapter.settings()
         tmp_db_name = db_adapter_settings.get('database', '')
         if tmp_db_name == "":
             print(ConsoleLogger.instance().make_color_string("[MigrationsCore] Invalid database adapter settings (not found key 'database' or empty value)!", 'error'))
-            return
+            return 1
 
         print(f"[MigrationsCore] Start drop database (name: {tmp_db_name})")
         del db_adapter_settings['database']
         db_adapter.set_settings(db_adapter_settings)
         if not db_adapter.connect():
             print(ConsoleLogger.instance().make_color_string("[MigrationsCore] Connect to database server failed!", 'error'))
-            return
+            return 1
         migrator.drop_database(tmp_db_name)
         del migrator
         del db_adapter
         print("[MigrationsCore] Finish drop database")
+        return 0
 
     def __register_migrator(self, name: str, class_name: str):
         """Зарегистрировать обработчик миграций
