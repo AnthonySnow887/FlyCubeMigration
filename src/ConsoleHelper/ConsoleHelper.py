@@ -145,19 +145,23 @@ class ConsoleHelper:
             'code': code
         })
 
-    def process_command(self, skip_undefined=False) -> int:
+    def process_command(self, skip_undefined=False, only_callbacks=None) -> int:
         """Метод обработки команд
 
         :param skip_undefined: Пропускать неизвестные команды
+        :param only_callbacks: Выполнить только требуемые обратные вызовы
         :returns: Код результата выполнения
         :rtype: int
         """
 
+        if only_callbacks is None:
+            only_callbacks = []
         argv = self.application_argv()
         if len(argv) == 0:
             print(f"ERROR: Invalid arguments! Use --help!")
             return 1
         # check primary commands
+        r_code = 0
         processed_cmd = []
         for k, v in argv.items():
             if not k in self.__primary_helpers:
@@ -169,10 +173,17 @@ class ConsoleHelper:
             if not callback:
                 continue
             # run callback
-            r_code = self.__process_callback(callback, k, v)
+            if len(only_callbacks) == 0:
+                r_code = self.__process_callback(callback, k, v)
+            elif callback in only_callbacks:
+                r_code = self.__process_callback(callback, k, v)
+            else:
+                continue
+
             # check if exit
             if has_exit:
                 return r_code
+
         # remove processed command
         for k in processed_cmd:
             del argv[k]
@@ -191,7 +202,13 @@ class ConsoleHelper:
             if not callback:
                 continue
             # run callback
-            r_code = self.__process_callback(callback, k, v)
+            if len(only_callbacks) == 0:
+                r_code = self.__process_callback(callback, k, v)
+            elif callback in only_callbacks:
+                r_code = self.__process_callback(callback, k, v)
+            else:
+                continue
+
             # check if exit
             if has_exit:
                 return r_code
