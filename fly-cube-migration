@@ -310,6 +310,7 @@ def db_settings(cmd, value):
         print("")
 
     print("=== FlyCubeMigration ======================\r\n")
+    return 0
 
 
 def db_version(cmd, value):
@@ -332,6 +333,7 @@ def db_version(cmd, value):
     print(f"Env type: {Config.instance().env_mode_str()}")
     print(f"Database version: {m_version}\r\n")
     print("=== FlyCubeMigration =====================\r\n")
+    return 0
 
 
 def db_migrate_status(cmd, value):
@@ -351,9 +353,10 @@ def db_migrate_status(cmd, value):
 
     print("=== FlyCubeMigration: Migrate status ===\r\n")
     print(f"Env type: {Config.instance().env_mode_str()}")
-    MigrationCore.instance().migrate_status(db_names)
+    r_code = MigrationCore.instance().migrate_status(db_names)
     print("")
     print("=== FlyCubeMigration =====================\r\n")
+    return r_code
 
 
 def db_migrate(cmd, value):
@@ -374,9 +377,10 @@ def db_migrate(cmd, value):
     print("=== FlyCubeMigration: Migrate database ===\r\n")
     print(f"Env type: {Config.instance().env_mode_str()}")
     m_version = int(ConsoleHelper.application_argv_value('--to-version', -1))
-    MigrationCore.instance().migrate(db_names, m_version)
+    r_code = MigrationCore.instance().migrate(db_names, m_version)
     print("")
     print("=== FlyCubeMigration =====================\r\n")
+    return r_code
 
 
 def db_migrate_redo(cmd, value):
@@ -397,9 +401,10 @@ def db_migrate_redo(cmd, value):
     print("=== FlyCubeMigration: Re-Install database migration ===\r\n")
     print(f"Env type: {Config.instance().env_mode_str()}")
     step = int(ConsoleHelper.application_argv_value('--step', 1))
-    MigrationCore.instance().migrate_redo(db_names, step)
+    r_code = MigrationCore.instance().migrate_redo(db_names, step)
     print("")
     print("=== FlyCubeMigration =====================\r\n")
+    return r_code
 
 
 def db_migrate_export(cmd, value):
@@ -421,9 +426,10 @@ def db_migrate_export(cmd, value):
     print(f"Env type: {Config.instance().env_mode_str()}")
     m_version = int(ConsoleHelper.application_argv_value('--to-version', -1))
     m_dir = str(ConsoleHelper.application_argv_value('--dir', f"{db_migrations_dir()}/export/"))
-    MigrationCore.instance().migrate_export(db_names, m_version, m_dir)
+    r_code = MigrationCore.instance().migrate_export(db_names, m_version, m_dir)
     print("")
     print("=== FlyCubeMigration =====================\r\n")
+    return r_code
 
 
 def db_rollback_export(cmd, value):
@@ -445,9 +451,10 @@ def db_rollback_export(cmd, value):
     print(f"Env type: {Config.instance().env_mode_str()}")
     m_version = 0
     m_dir = str(ConsoleHelper.application_argv_value('--dir', f"{db_migrations_dir()}/export/"))
-    MigrationCore.instance().migrate_export(db_names, m_version, m_dir)
+    r_code = MigrationCore.instance().migrate_export(db_names, m_version, m_dir)
     print("")
     print("=== FlyCubeMigration =====================\r\n")
+    return r_code
 
 
 def db_rollback(cmd, value):
@@ -468,9 +475,10 @@ def db_rollback(cmd, value):
     print("=== FlyCubeMigration: Rollback database ===\r\n")
     print(f"Env type: {Config.instance().env_mode_str()}")
     step = int(ConsoleHelper.application_argv_value('--step', 1))
-    MigrationCore.instance().rollback(db_names, step)
+    r_code = MigrationCore.instance().rollback(db_names, step)
     print("")
     print("=== FlyCubeMigration =====================\r\n")
+    return r_code
 
 
 def db_rollback_all(cmd, value):
@@ -482,9 +490,10 @@ def db_rollback_all(cmd, value):
 
     print("=== FlyCubeMigration: Rollback database ===\r\n")
     print(f"Env type: {Config.instance().env_mode_str()}")
-    MigrationCore.instance().rollback(db_names, -1)
+    r_code = MigrationCore.instance().rollback(db_names, -1)
     print("")
     print("=== FlyCubeMigration =====================\r\n")
+    return r_code
 
 
 def db_create(cmd, value):

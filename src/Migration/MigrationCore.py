@@ -85,19 +85,21 @@ class MigrationCore:
 
         return self.__current_migration_version(db_names)
 
-    def migrate(self, db_names: list, version: int = -1):
+    def migrate(self, db_names: list, version: int = -1) -> int:
         """Метод миграции базы данных
 
         :param db_names: список имен баз данных в которых будет производиться миграция
         :param version: версия миграции, до которой требуется актуализировать базы данных
+        :returns: Код результата выполнения
+        :rtype: int
         """
 
         if len(self.__migrations) == 0:
             print(ConsoleLogger.instance().make_color_string("[MigrationsCore] Not found migration files!", 'error'))
-            return
+            return 1
         if len(db_names) == 0:
             print(ConsoleLogger.instance().make_color_string("[MigrationsCore] Database names list is Empty!", 'error'))
-            return
+            return 1
         if version < 0:
             version = sys.maxsize
         # select current migration version from database
@@ -105,7 +107,7 @@ class MigrationCore:
         # check versions
         if current_version == version:
             print(ConsoleLogger.instance().make_color_string("[MigrationsCore] Current migration version already installed", 'info'))
-            return
+            return 0
         # sort migrations
         m_command = 'up'
         mirgations = self.__migrations
@@ -118,6 +120,7 @@ class MigrationCore:
         print(f"[MigrationsCore] Start migrate from {current_version}:")
         new_version = -1
         changed_databases = []
+        r_code = 0
         for k, m in mirgations.items():
             # configuration current migration
             m.configuration()
@@ -137,12 +140,12 @@ class MigrationCore:
             # check db adapter name
             if db_adapter_name == "":
                 print(ConsoleLogger.instance().make_color_string("[MigrationsCore] Invalid current database adapter name!", 'error'))
-                return
+                return 1
             # select current migrator name
             migrator_name = self.__migrator_class_name(db_adapter_name)
             if migrator_name == "":
                 print(ConsoleLogger.instance().make_color_string(f"[MigrationsCore] Invalid current migrator name for database adapter (name: {db_adapter_name})!", 'error'))
-                return
+                return 1
             # check database name
             if not m_database in db_names:
                 continue
@@ -175,6 +178,7 @@ class MigrationCore:
             print(f"[{ConsoleLogger.instance().make_color_string(m_command.capitalize(), 'ok')}][DB: {m_database_title}] Migrate {msg_attr} ({m_version} - '{m_class_name}')")
             if not m.migrate(version, migrator_name):
                 print(f"[{ConsoleLogger.instance().make_color_string(m_command.capitalize() + ' - FAILED', 'error')}][DB: {m_database_title}] Migrate {msg_attr} ({m_version} - '{m_class_name}')")
+                r_code = 1
                 break
 
             # save changed database
@@ -193,22 +197,26 @@ class MigrationCore:
         print(f"[MigrationsCore] Current migration version: {current_version}")
 
         # Execute post-scripts
-        self.__execute_all_post_scripts(changed_databases)
+        if not self.__execute_all_post_scripts(changed_databases):
+            r_code = 1
+        return r_code
 
-    def migrate_export(self, db_names: list, version: int = -1, dir_export: str = ""):
+    def migrate_export(self, db_names: list, version: int = -1, dir_export: str = "") -> int:
         """Метод выгрузки миграций базы данных в SQL файлы
 
         :param db_names: список имен баз данных для которых требуется миграция
         :param version: версия миграции, до которой требуется актуализировать базы данных
         :param dir_export: каталог для экспорта миграций
+        :returns: Код результата выполнения
+        :rtype: int
         """
 
         if len(self.__migrations) == 0:
             print(ConsoleLogger.instance().make_color_string("[MigrationsCore] Not found migration files!", 'error'))
-            return
+            return 1
         if len(db_names) == 0:
             print(ConsoleLogger.instance().make_color_string("[MigrationsCore] Database names list is Empty!", 'error'))
-            return
+            return 1
         if version < 0:
             version = sys.maxsize
         # sort migrations
@@ -230,90 +238,7 @@ class MigrationCore:
             os.mkdir(dir_export)
 
         new_version = -1
-        for k, m in mirgations.items():
-            # configuration current migration
-            m.configuration()
-            # select migration info
-            m_version = int(k)
-            m_class_name = type(m).__name__
-            m_database = m.database()
-            m_database_title = m_database
-            if m_database_title == "":
-                m_database_title = 'primary'
-            # select current adapter name
-            db_adapter_name = ''
-            if m_database == "":
-                db_adapter_name = DatabaseFactory.instance().primary_adapter_name()
-            else:
-                db_adapter_name = DatabaseFactory.instance().secondary_adapter_name(m_database)
-            # check db adapter name
-            if db_adapter_name == "":
-                print(ConsoleLogger.instance().make_color_string(
-                    "[MigrationsCore] Invalid current database adapter name!", 'error'))
-                return
-            # select current migrator name
-            migrator_name = self.__migrator_class_name(db_adapter_name)
-            if migrator_name == "":
-                print(ConsoleLogger.instance().make_color_string(
-                    f"[MigrationsCore] Invalid current migrator name for database adapter (name: {db_adapter_name})!",
-                    'error'))
-                return
-            # check database name
-            if not m_database in db_names:
-                continue
-            # check version
-            if m_command == "up" and new_version == version:
-                break
-            elif m_command == "down" and m_version == version:
-                new_version = version
-                break
-
-            # check dir for current database migrations
-            tmp_dir_export = f"{Helper.splice_symbol_last(dir_export, '/')}/{m_database_title}"
-            if not os.path.exists(tmp_dir_export):
-                os.mkdir(tmp_dir_export)
-
-            print(
-                f"[{ConsoleLogger.instance().make_color_string(m_command.capitalize(), 'ok')}][DB: {m_database_title}] Export ({m_version} - '{m_class_name}')")
-            if not m.export_migrate(version, migrator_name, Helper.splice_symbol_last(tmp_dir_export, '/')):
-                print(
-                    f"[{ConsoleLogger.instance().make_color_string(m_command.capitalize() + ' - FAILED', 'error')}][DB: {m_database_title}] Export ({m_version} - '{m_class_name}')")
-                break
-
-            new_version = m_version
-
-        print("[MigrationsCore] Finish export migrations")
-        print(f"[MigrationsCore] Directory for export: {dir_export}")
-
-    def rollback(self, db_names: list, step: int = 1):
-        """Метод отката миграции
-
-        :param db_names: список имен баз данных в которых будет производиться миграция
-        :param step: число шагов, на которые нужно откатить базу данных
-        """
-
-        if len(self.__migrations) == 0:
-            print(ConsoleLogger.instance().make_color_string("[MigrationsCore] Not found migration files!", 'error'))
-            return
-        if len(db_names) == 0:
-            print(ConsoleLogger.instance().make_color_string("[MigrationsCore] Database names list is Empty!", 'error'))
-            return
-        if step == 0:
-            print(ConsoleLogger.instance().make_color_string("[MigrationsCore] Not specified the number of steps to change. Stop.", 'error'))
-            return
-        if step < 0 or step > len(self.__migrations.keys()):
-            step = len(self.__migrations.keys())
-        # select current migration version from database
-        current_version = self.__current_migration_version(db_names)
-        # check versions
-        if current_version == 0:
-            print(ConsoleLogger.instance().make_color_string("[MigrationsCore] Migrations have not yet been installed!", 'warning'))
-            return
-        mirgations = Helper.sort(self.__migrations, True)
-        print(f"[MigrationsCore] Start rollback from {current_version}:")
-        new_version = -1
-        save_version_in_db = False
-        changed_databases = []
+        r_code = 0
         for k, m in mirgations.items():
             # configuration current migration
             m.configuration()
@@ -333,12 +258,96 @@ class MigrationCore:
             # check db adapter name
             if db_adapter_name == "":
                 print(ConsoleLogger.instance().make_color_string("[MigrationsCore] Invalid current database adapter name!", 'error'))
-                return
+                return 1
             # select current migrator name
             migrator_name = self.__migrator_class_name(db_adapter_name)
             if migrator_name == "":
                 print(ConsoleLogger.instance().make_color_string(f"[MigrationsCore] Invalid current migrator name for database adapter (name: {db_adapter_name})!", 'error'))
-                return
+                return 1
+            # check database name
+            if not m_database in db_names:
+                continue
+            # check version
+            if m_command == "up" and new_version == version:
+                break
+            elif m_command == "down" and m_version == version:
+                new_version = version
+                break
+
+            # check dir for current database migrations
+            tmp_dir_export = f"{Helper.splice_symbol_last(dir_export, '/')}/{m_database_title}"
+            if not os.path.exists(tmp_dir_export):
+                os.mkdir(tmp_dir_export)
+
+            print(f"[{ConsoleLogger.instance().make_color_string(m_command.capitalize(), 'ok')}][DB: {m_database_title}] Export ({m_version} - '{m_class_name}')")
+            if not m.export_migrate(version, migrator_name, Helper.splice_symbol_last(tmp_dir_export, '/')):
+                print(f"[{ConsoleLogger.instance().make_color_string(m_command.capitalize() + ' - FAILED', 'error')}][DB: {m_database_title}] Export ({m_version} - '{m_class_name}')")
+                r_code = 1
+                break
+
+            new_version = m_version
+
+        print("[MigrationsCore] Finish export migrations")
+        print(f"[MigrationsCore] Directory for export: {dir_export}")
+        return r_code
+
+    def rollback(self, db_names: list, step: int = 1) -> int:
+        """Метод отката миграции
+
+        :param db_names: список имен баз данных в которых будет производиться миграция
+        :param step: число шагов, на которые нужно откатить базу данных
+        :returns: Код результата выполнения
+        :rtype: int
+        """
+
+        if len(self.__migrations) == 0:
+            print(ConsoleLogger.instance().make_color_string("[MigrationsCore] Not found migration files!", 'error'))
+            return 1
+        if len(db_names) == 0:
+            print(ConsoleLogger.instance().make_color_string("[MigrationsCore] Database names list is Empty!", 'error'))
+            return 1
+        if step == 0:
+            print(ConsoleLogger.instance().make_color_string("[MigrationsCore] Not specified the number of steps to change. Stop.", 'error'))
+            return 1
+        if step < 0 or step > len(self.__migrations.keys()):
+            step = len(self.__migrations.keys())
+        # select current migration version from database
+        current_version = self.__current_migration_version(db_names)
+        # check versions
+        if current_version == 0:
+            print(ConsoleLogger.instance().make_color_string("[MigrationsCore] Migrations have not yet been installed!", 'warning'))
+            return 1
+        mirgations = Helper.sort(self.__migrations, True)
+        print(f"[MigrationsCore] Start rollback from {current_version}:")
+        new_version = -1
+        save_version_in_db = False
+        changed_databases = []
+        r_code = 0
+        for k, m in mirgations.items():
+            # configuration current migration
+            m.configuration()
+            # select migration info
+            m_version = int(k)
+            m_class_name = type(m).__name__
+            m_database = m.database()
+            m_database_title = m_database
+            if m_database_title == "":
+                m_database_title = 'primary'
+            # select current adapter name
+            db_adapter_name = ''
+            if m_database == "":
+                db_adapter_name = DatabaseFactory.instance().primary_adapter_name()
+            else:
+                db_adapter_name = DatabaseFactory.instance().secondary_adapter_name(m_database)
+            # check db adapter name
+            if db_adapter_name == "":
+                print(ConsoleLogger.instance().make_color_string("[MigrationsCore] Invalid current database adapter name!", 'error'))
+                return 1
+            # select current migrator name
+            migrator_name = self.__migrator_class_name(db_adapter_name)
+            if migrator_name == "":
+                print(ConsoleLogger.instance().make_color_string(f"[MigrationsCore] Invalid current migrator name for database adapter (name: {db_adapter_name})!", 'error'))
+                return 1
             # check save version in db
             if save_version_in_db:
                 self.__append_migration_version(m_database, m_version)
@@ -359,8 +368,8 @@ class MigrationCore:
                 continue
             print(f"[{ConsoleLogger.instance().make_color_string('Down', 'ok')}][DB: {m_database_title}] Migrate from ({m_version} - '{m_class_name}')")
             if not m.migrate(m_version - 1, migrator_name):
-                print(
-                    f"[{ConsoleLogger.instance().make_color_string('Down - FAILED', 'error')}][DB: {m_database_title}] Migrate from ({m_version} - '{m_class_name}')")
+                print(f"[{ConsoleLogger.instance().make_color_string('Down - FAILED', 'error')}][DB: {m_database_title}] Migrate from ({m_version} - '{m_class_name}')")
+                r_code = 1
                 break
 
             # save changed database
@@ -381,28 +390,36 @@ class MigrationCore:
         print(f"[MigrationsCore] Current migration version: {current_version}")
 
         # Execute post-scripts
-        self.__execute_all_post_scripts(changed_databases)
+        if not self.__execute_all_post_scripts(changed_databases):
+            r_code = 1
+        return r_code
 
-    def migrate_redo(self, db_names: list, step: int = 1):
+    def migrate_redo(self, db_names: list, step: int = 1) -> int:
         """Метод перустановки миграции
 
         :param db_names: список имен баз данных в которых будет производиться миграция
         :param step: число шагов, на которые нужно перустановить базу данных
+        :returns: Код результата выполнения
+        :rtype: int
         """
 
         cur_v = self.current_version(db_names)
         if cur_v == 0:
             print(ConsoleLogger.instance().make_color_string("[MigrationsCore] Migrations have not yet been installed!", 'warning'))
-            return
-        self.rollback(db_names, step)
+            return 1
+        r_code = self.rollback(db_names, step)
+        if r_code != 0:
+            return r_code
         print("")
-        self.migrate(db_names, cur_v)
+        r_code = self.migrate(db_names, cur_v)
+        return r_code
 
-    def migrate_status(self, db_names: list):
+    def migrate_status(self, db_names: list) -> int:
         """Запросить состояние миграций
 
         :param db_names: список имен баз данных в которых будет производиться поиск
-        :return:
+        :returns: Код результата выполнения
+        :rtype: int
         """
 
         cur_v = self.current_version(db_names)
@@ -457,6 +474,7 @@ class MigrationCore:
         print(f"[MigrationsCore] Installed in database: {size_installed}")
         for t in tmp_state_lst_sorted.values():
             print(t)
+        return 0
 
     def db_create(self, db_name: str) -> int:
         """Создать базу данных для миграций
@@ -743,14 +761,16 @@ class MigrationCore:
         db_adapter.query(f"DELETE FROM schema_migrations WHERE version = '{version}';")
         ConsoleLogger.instance().set_show_out(show_out)
 
-    def __execute_all_post_scripts(self, databases: list):
+    def __execute_all_post_scripts(self, databases: list) -> bool:
         """Установить все SQL post-скрипты на все измененные базы данных
 
         :param databases: список измененных бах данных
         :return:
+        :rtype: bool
         """
 
         # Execute post-scripts
+        is_ok = True
         print("[MigrationsCore] Execute post-scripts:")
         post_scripts = PostScripts.instance().post_scripts()
         if len(post_scripts) == 0:
@@ -758,7 +778,6 @@ class MigrationCore:
         elif len(databases) == 0:
             print(f"[{ConsoleLogger.instance().make_color_string('Skip', 'info')}] List of changed databases is Empty.")
         else:
-            is_ok = True
             for f in post_scripts:
                 for db in databases:
                     db_title = str(db)
@@ -774,6 +793,7 @@ class MigrationCore:
                     break
 
         print("[MigrationsCore] Finish execute post-scripts")
+        return is_ok
 
     def __execute_post_script(self, db_name: str, post_script_path: str) -> bool:
         """Установить SQL post-скрипт
