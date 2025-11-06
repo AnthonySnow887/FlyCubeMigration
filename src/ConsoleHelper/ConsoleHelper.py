@@ -145,13 +145,18 @@ class ConsoleHelper:
             'code': code
         })
 
-    def process_command(self):
-        """Метод обработки команд"""
+    def process_command(self, skip_undefined=False) -> int:
+        """Метод обработки команд
+
+        :param skip_undefined: Пропускать неизвестные команды
+        :returns: Код результата выполнения
+        :rtype: int
+        """
 
         argv = self.application_argv()
         if len(argv) == 0:
             print(f"ERROR: Invalid arguments! Use --help!")
-            return
+            return 1
         # check primary commands
         processed_cmd = []
         for k, v in argv.items():
@@ -164,10 +169,10 @@ class ConsoleHelper:
             if not callback:
                 continue
             # run callback
-            self.__process_callback(callback, k, v)
+            r_code = self.__process_callback(callback, k, v)
             # check if exit
             if has_exit:
-                return
+                return r_code
         # remove processed command
         for k in processed_cmd:
             del argv[k]
@@ -175,41 +180,49 @@ class ConsoleHelper:
         # check commands
         for k, v in argv.items():
             if not k in self.__helpers:
-                print(f"ERROR: Undefined command '{k}'! Use --help!")
-                return
+                if not skip_undefined:
+                    print(f"ERROR: Undefined command '{k}'! Use --help!")
+                    return 1
+                else:
+                    continue
             has_exit = self.__helpers[k]['has_exit']
             callback = self.__helpers[k]['callback']
             # check callback
             if not callback:
                 continue
             # run callback
-            self.__process_callback(callback, k, v)
+            r_code = self.__process_callback(callback, k, v)
             # check if exit
             if has_exit:
-                return
+                return r_code
 
-    def __process_callback(self, callback, cmd: str, cmd_value):
+        # return success code
+        return 0
+
+    def __process_callback(self, callback, cmd: str, cmd_value) -> int:
         """Метод вызова callback функции
 
         :param callback: callback функция
         :param cmd: команда
         :param cmd_value: значение команды
+        :returns: Код результата выполнения
+        :rtype: int
         """
 
         sig = signature(callback)
         callback_param_len = len(sig.parameters)
         if callback_param_len == 0:
-            callback()
+            return callback()
         elif callback_param_len == 1:
-            callback(cmd)
+            return callback(cmd)
         elif callback_param_len == 2:
-            callback(cmd, cmd_value)
+            return callback(cmd, cmd_value)
         else:
             args_lst = [cmd, cmd_value]
             for i in range(0, callback_param_len - 2):
                 args_lst.append(None)
             tuple_args_lst = tuple(args_lst)
-            callback(*tuple_args_lst)
+            return callback(*tuple_args_lst)
 
     def __show_help(self):
         """Метод вывода справки"""

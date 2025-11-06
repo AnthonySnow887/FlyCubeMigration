@@ -1,6 +1,7 @@
 #!/usr/bin/env python3 
 
 import os
+import sys
 
 # Check is root user
 if os.geteuid() == 0:
@@ -20,22 +21,26 @@ from src.Settings.Settings import Settings
 from src.PostScripts.PostScripts import PostScripts
 from src.TemplateCompiler.TemplateCompiler import TemplateCompiler
 
-version = "1.2.1"
+version = "1.3.0"
 url_fly_cube_migration_latest = "https://api.github.com/repos/AnthonySnow887/FlyCubeMigration/releases/latest"
 
 
-def init_core():
-    # Create config
-    Config.instance().load_config(settings_dir())
+def init_core(skip_errors=False):
+    try:
+        # Create config
+        Config.instance().load_config(settings_dir())
 
-    # Create and load database factory
-    DatabaseFactory.instance().load_config(configs_dir())
+        # Create and load database factory
+        DatabaseFactory.instance().load_config(configs_dir())
 
-    # Create and load post-scripts
-    PostScripts.instance().load_config(configs_dir())
+        # Create and load post-scripts
+        PostScripts.instance().load_config(configs_dir())
 
-    # Create and load migration core
-    MigrationCore.instance().load_migrations(db_migrations_dir())
+        # Create and load migration core
+        MigrationCore.instance().load_migrations(db_migrations_dir())
+    except Exception as inst:
+        if not skip_errors:
+            raise inst
 
 
 def settings_dir() -> str:
@@ -71,18 +76,20 @@ def set_config_dir(cmd, value):
     # Re-Load post-scripts factory
     PostScripts.instance().reset_config()
     PostScripts.instance().load_config(configs_dir())
+    return 0
 
 
 def save_config_dir():
     # Get config dir
     conf_dir_value = str(ConsoleHelper.application_argv_value('--config-dir', ''))
     if conf_dir_value == '':
-        return
+        return 0
     # Save settings
     s = Settings('FlyCubeMigration')
     s.set_value('config-dir', conf_dir_value)
     s.save_settings()
     print("[FlyCubeMigration] Save settings success")
+    return 0
 
 
 def clear_config_dir():
@@ -91,6 +98,7 @@ def clear_config_dir():
     s.remove_key('config-dir')
     s.save_settings()
     print("[FlyCubeMigration] Clear settings success")
+    return 0
 
 
 def show_settings():
@@ -106,6 +114,7 @@ def show_settings():
         print(f" - {k}: {v}")
     print("")
     print("=== FlyCubeMigration =========================")
+    return 0
 
 
 def show_post_scripts():
@@ -120,10 +129,12 @@ def show_post_scripts():
         print(f" - {f}")
     print("")
     print("=== FlyCubeMigration =========================")
+    return 0
 
 
 def show_version():
     print(f"[FlyCubeMigration] Core version: {version}")
+    return 0
 
 
 def select_latest_version() -> str:
@@ -140,6 +151,7 @@ def select_latest_version() -> str:
 
 def show_latest_version():
     print(f"[FlyCubeMigration] Latest Core version: {select_latest_version()}")
+    return 0
 
 
 def set_env(cmd, value):
@@ -150,11 +162,13 @@ def set_env(cmd, value):
     # reload database factory config
     DatabaseFactory.instance().reset_config()
     DatabaseFactory.instance().load_config(configs_dir())
+    return 0
 
 
 def set_show_output(cmd, value):
     tmp_value = (str(value).strip().lower() == 'true')
     ConsoleLogger.instance().set_show_out(tmp_value)
+    return 0
 
 
 def create_new_project(cmd, value):
@@ -162,7 +176,7 @@ def create_new_project(cmd, value):
     m_name = Helper.to_camelcase(str(ConsoleHelper.application_argv_value('--name', '')))
     if m_name == '':
         print("Name is Empty!")
-        return
+        return 1
     now = datetime.now()
     now.strftime("%d/%m/%Y %H:%M:%S")
     # check project def dir
@@ -174,7 +188,7 @@ def create_new_project(cmd, value):
     m_dir = f"/home/{Helper.current_user()}/FlyCubeMigrationProjects/{m_name}"
     if os.path.exists(m_dir):
         print("Project directory already exist!")
-        return
+        return 1
     # create project files
     print("=== FlyCubeMigration =========================")
     os.mkdir(m_dir)
@@ -217,6 +231,7 @@ def create_new_project(cmd, value):
         print(f"[Created] {m_dir}/config/post-scripts.yml")
 
     print("=== FlyCubeMigration =========================")
+    return 0
 
 
 def create_migration(cmd, value):
@@ -226,7 +241,7 @@ def create_migration(cmd, value):
     m_name = Helper.to_camelcase(str(ConsoleHelper.application_argv_value('--name', '')))
     if m_name == '':
         print("Name is Empty!")
-        return
+        return 1
 
     now = datetime.now()
     now.strftime("%d/%m/%Y %H:%M:%S")
@@ -249,6 +264,7 @@ def create_migration(cmd, value):
 
     print(f"[Created] {m_path}")
     print("=== FlyCubeMigration =========================")
+    return 0
 
 
 def make_migration_number(cmd, value):
@@ -258,6 +274,43 @@ def make_migration_number(cmd, value):
     print("=== FlyCubeMigration: Make migration number ===")
     print(f"{cut_time}")
     print("=== FlyCubeMigration ==========================")
+    return 0
+
+
+def db_settings(cmd, value):
+    # init core
+    init_core()
+    # run command
+    db_names = []
+    result = re.search('^--db-settings-(.*)$', cmd)
+    if not result:
+        s_db = DatabaseFactory.instance().secondary_databases()
+        db_names = [''] + s_db
+    else:
+        db_name = result.group(1)
+        if db_name == 'primary':
+            db_name = ''
+        db_names = [db_name]
+
+    print("=== FlyCubeMigration: Database settings ===\r\n")
+    print(f"Env type: {Config.instance().env_mode_str()}")
+    print(f"Database settings:")
+    for db_name in db_names:
+        db_settings = DatabaseFactory.instance().database_settings(db_name)
+        if len(db_settings) == 0:
+            continue
+        if db_name == "":
+            db_name = "primary"
+        value_prefix = "  "
+        if len(db_names) > 1:
+            print(f"  {db_name}:")
+            value_prefix = "    "
+        for k, v in db_settings.items():
+            print(f"{value_prefix}{k}: {v}")
+        print("")
+
+    print("=== FlyCubeMigration ======================\r\n")
+    return 0
 
 
 def db_version(cmd, value):
@@ -280,6 +333,7 @@ def db_version(cmd, value):
     print(f"Env type: {Config.instance().env_mode_str()}")
     print(f"Database version: {m_version}\r\n")
     print("=== FlyCubeMigration =====================\r\n")
+    return 0
 
 
 def db_migrate_status(cmd, value):
@@ -299,9 +353,10 @@ def db_migrate_status(cmd, value):
 
     print("=== FlyCubeMigration: Migrate status ===\r\n")
     print(f"Env type: {Config.instance().env_mode_str()}")
-    MigrationCore.instance().migrate_status(db_names)
+    r_code = MigrationCore.instance().migrate_status(db_names)
     print("")
     print("=== FlyCubeMigration =====================\r\n")
+    return r_code
 
 
 def db_migrate(cmd, value):
@@ -322,9 +377,10 @@ def db_migrate(cmd, value):
     print("=== FlyCubeMigration: Migrate database ===\r\n")
     print(f"Env type: {Config.instance().env_mode_str()}")
     m_version = int(ConsoleHelper.application_argv_value('--to-version', -1))
-    MigrationCore.instance().migrate(db_names, m_version)
+    r_code = MigrationCore.instance().migrate(db_names, m_version)
     print("")
     print("=== FlyCubeMigration =====================\r\n")
+    return r_code
 
 
 def db_migrate_redo(cmd, value):
@@ -345,9 +401,10 @@ def db_migrate_redo(cmd, value):
     print("=== FlyCubeMigration: Re-Install database migration ===\r\n")
     print(f"Env type: {Config.instance().env_mode_str()}")
     step = int(ConsoleHelper.application_argv_value('--step', 1))
-    MigrationCore.instance().migrate_redo(db_names, step)
+    r_code = MigrationCore.instance().migrate_redo(db_names, step)
     print("")
     print("=== FlyCubeMigration =====================\r\n")
+    return r_code
 
 
 def db_migrate_export(cmd, value):
@@ -369,9 +426,10 @@ def db_migrate_export(cmd, value):
     print(f"Env type: {Config.instance().env_mode_str()}")
     m_version = int(ConsoleHelper.application_argv_value('--to-version', -1))
     m_dir = str(ConsoleHelper.application_argv_value('--dir', f"{db_migrations_dir()}/export/"))
-    MigrationCore.instance().migrate_export(db_names, m_version, m_dir)
+    r_code = MigrationCore.instance().migrate_export(db_names, m_version, m_dir)
     print("")
     print("=== FlyCubeMigration =====================\r\n")
+    return r_code
 
 
 def db_rollback_export(cmd, value):
@@ -393,9 +451,10 @@ def db_rollback_export(cmd, value):
     print(f"Env type: {Config.instance().env_mode_str()}")
     m_version = 0
     m_dir = str(ConsoleHelper.application_argv_value('--dir', f"{db_migrations_dir()}/export/"))
-    MigrationCore.instance().migrate_export(db_names, m_version, m_dir)
+    r_code = MigrationCore.instance().migrate_export(db_names, m_version, m_dir)
     print("")
     print("=== FlyCubeMigration =====================\r\n")
+    return r_code
 
 
 def db_rollback(cmd, value):
@@ -416,9 +475,10 @@ def db_rollback(cmd, value):
     print("=== FlyCubeMigration: Rollback database ===\r\n")
     print(f"Env type: {Config.instance().env_mode_str()}")
     step = int(ConsoleHelper.application_argv_value('--step', 1))
-    MigrationCore.instance().rollback(db_names, step)
+    r_code = MigrationCore.instance().rollback(db_names, step)
     print("")
     print("=== FlyCubeMigration =====================\r\n")
+    return r_code
 
 
 def db_rollback_all(cmd, value):
@@ -430,9 +490,10 @@ def db_rollback_all(cmd, value):
 
     print("=== FlyCubeMigration: Rollback database ===\r\n")
     print(f"Env type: {Config.instance().env_mode_str()}")
-    MigrationCore.instance().rollback(db_names, -1)
+    r_code = MigrationCore.instance().rollback(db_names, -1)
     print("")
     print("=== FlyCubeMigration =====================\r\n")
+    return r_code
 
 
 def db_create(cmd, value):
@@ -450,18 +511,25 @@ def db_create(cmd, value):
 
     if db_name == '':
         # create primary
-        MigrationCore.instance().db_create(db_name)
+        r_code = MigrationCore.instance().db_create(db_name)
+        if r_code != 0:
+            return r_code
         # create secondary
         for d in s_db:
-            MigrationCore.instance().db_create(d)
+            r_code = MigrationCore.instance().db_create(d)
+            if r_code != 0:
+                return r_code
     else:
         if db_name == 'primary':
             db_name = ''
         # create database by name
-        MigrationCore.instance().db_create(db_name)
+        r_code = MigrationCore.instance().db_create(db_name)
+        if r_code != 0:
+            return r_code
 
     print("")
     print("=== FlyCubeMigration ====================\r\n")
+    return 0
 
 
 def db_create_all(cmd, value):
@@ -479,10 +547,14 @@ def db_create_all(cmd, value):
     s_db = DatabaseFactory.instance().secondary_databases()
 
     # create primary
-    MigrationCore.instance().db_create('')
+    r_code = MigrationCore.instance().db_create('')
+    if r_code != 0:
+        return r_code
     # create secondary
     for d in s_db:
-        MigrationCore.instance().db_create(d)
+        r_code = MigrationCore.instance().db_create(d)
+        if r_code != 0:
+            return r_code
 
     #
     # create for production
@@ -493,13 +565,18 @@ def db_create_all(cmd, value):
     s_db = DatabaseFactory.instance().secondary_databases()
 
     # create primary
-    MigrationCore.instance().db_create('')
+    r_code = MigrationCore.instance().db_create('')
+    if r_code != 0:
+        return r_code
     # create secondary
     for d in s_db:
-        MigrationCore.instance().db_create(d)
+        r_code = MigrationCore.instance().db_create(d)
+        if r_code != 0:
+            return r_code
 
     print("")
     print("=== FlyCubeMigration ====================\r\n")
+    return 0
 
 
 def db_drop(cmd, value):
@@ -517,18 +594,25 @@ def db_drop(cmd, value):
 
     if db_name == '':
         # create primary
-        MigrationCore.instance().db_drop(db_name)
+        r_code = MigrationCore.instance().db_drop(db_name)
+        if r_code != 0:
+            return r_code
         # create secondary
         for d in s_db:
-            MigrationCore.instance().db_drop(d)
+            r_code = MigrationCore.instance().db_drop(d)
+            if r_code != 0:
+                return r_code
     else:
         if db_name == 'primary':
             db_name = ''
         # create database by name
-        MigrationCore.instance().db_drop(db_name)
+        r_code = MigrationCore.instance().db_drop(db_name)
+        if r_code != 0:
+            return r_code
 
     print("")
     print("=== FlyCubeMigration ====================\r\n")
+    return 0
 
 
 def db_drop_all(cmd, value):
@@ -546,10 +630,14 @@ def db_drop_all(cmd, value):
     s_db = DatabaseFactory.instance().secondary_databases()
 
     # create primary
-    MigrationCore.instance().db_drop('')
+    r_code = MigrationCore.instance().db_drop('')
+    if r_code != 0:
+        return r_code
     # create secondary
     for d in s_db:
-        MigrationCore.instance().db_drop(d)
+        r_code = MigrationCore.instance().db_drop(d)
+        if r_code != 0:
+            return r_code
 
     #
     # create for production
@@ -560,13 +648,18 @@ def db_drop_all(cmd, value):
     s_db = DatabaseFactory.instance().secondary_databases()
 
     # create primary
-    MigrationCore.instance().db_drop('')
+    r_code = MigrationCore.instance().db_drop('')
+    if r_code != 0:
+        return r_code
     # create secondary
     for d in s_db:
-        MigrationCore.instance().db_drop(d)
+        r_code = MigrationCore.instance().db_drop(d)
+        if r_code != 0:
+            return r_code
 
     print("")
     print("=== FlyCubeMigration ====================\r\n")
+    return 0
 
 
 def main():
@@ -658,6 +751,14 @@ def main():
         'description': 'Create and output new migration version number',
         'group': '--make-migration-number'
     })
+
+    # process console command for base commands (skip undefined args on this step)
+    ConsoleHelper.instance().process_command(True)
+
+    # Init core
+    init_core(True)
+
+    # Add group commands
 
     #
     # --db-create... commands:
@@ -911,6 +1012,31 @@ def main():
             })
 
     #
+    # --db-settings... commands:
+    #
+    # --db-settings
+    ConsoleHelper.instance().append_helper(db_settings, {
+        'command': '--db-settings',
+        'description': 'Show database(s) config settings',
+        'group': '--db-settings'
+    })
+    if DatabaseFactory.instance().has_secondary_databases():
+        # --db-settings-primary
+        ConsoleHelper.instance().append_helper(db_settings, {
+            'command': '--db-settings-primary',
+            'description': 'Show config settings for primary database',
+            'group': '--db-settings'
+        })
+
+        for d in DatabaseFactory.instance().secondary_databases():
+            # --db-settings-[database name]
+            ConsoleHelper.instance().append_helper(db_settings, {
+                'command': f"--db-settings-{d}",
+                'description': f"Show config settings for database '{d}'",
+                'group': '--db-settings'
+            })
+
+    #
     # --db-migrate-export... commands:
     #
     # --db-migrate-export
@@ -1079,8 +1205,9 @@ def main():
                                             f"{ConsoleHelper.application_file()} --db-migrate-redo --step=3")
 
     # process console command
-    ConsoleHelper.instance().process_command()
+    return ConsoleHelper.instance().process_command()
 
 
 if __name__ == "__main__":
-    main()
+    exit_status = main()
+    sys.exit(exit_status)
