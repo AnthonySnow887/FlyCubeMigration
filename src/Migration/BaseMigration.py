@@ -154,6 +154,10 @@ class BaseMigration:
         export_file = os.path.basename(self.__file).replace(".py", ".sql")
         export_file = f"{dir_export}/{export_file}"
 
+        # check if exist - remove old file
+        if os.path.exists(export_file):
+            os.remove(export_file)
+
         # Creates a new export file
         with open(export_file, 'w') as f:
             pass

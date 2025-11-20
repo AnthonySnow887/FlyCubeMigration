@@ -21,7 +21,7 @@ from src.Settings.Settings import Settings
 from src.PostScripts.PostScripts import PostScripts
 from src.TemplateCompiler.TemplateCompiler import TemplateCompiler
 
-version = "1.3.0"
+version = "1.3.1"
 url_fly_cube_migration_latest = "https://api.github.com/repos/AnthonySnow887/FlyCubeMigration/releases/latest"
 
 
@@ -426,7 +426,8 @@ def db_migrate_export(cmd, value):
     print(f"Env type: {Config.instance().env_mode_str()}")
     m_version = int(ConsoleHelper.application_argv_value('--to-version', -1))
     m_dir = str(ConsoleHelper.application_argv_value('--dir', f"{db_migrations_dir()}/export/"))
-    r_code = MigrationCore.instance().migrate_export(db_names, m_version, m_dir)
+    m_re_create_dir = Helper.str_to_bool(ConsoleHelper.application_argv_value('--re-create-dir', "false"))
+    r_code = MigrationCore.instance().migrate_export(db_names, m_version, m_dir, m_re_create_dir)
     print("")
     print("=== FlyCubeMigration =====================\r\n")
     return r_code
@@ -451,7 +452,8 @@ def db_rollback_export(cmd, value):
     print(f"Env type: {Config.instance().env_mode_str()}")
     m_version = 0
     m_dir = str(ConsoleHelper.application_argv_value('--dir', f"{db_migrations_dir()}/export/"))
-    r_code = MigrationCore.instance().migrate_export(db_names, m_version, m_dir)
+    m_re_create_dir = Helper.str_to_bool(ConsoleHelper.application_argv_value('--re-create-dir', "false"))
+    r_code = MigrationCore.instance().migrate_export(db_names, m_version, m_dir, m_re_create_dir)
     print("")
     print("=== FlyCubeMigration =====================\r\n")
     return r_code
@@ -1166,6 +1168,14 @@ def main():
         'command': '--dir',
         'param': '[VALUE]',
         'description': 'Set directory for export migration files (optional; default: \"FLY_CUBE_MIGRATION_DIR/export/\")',
+        'group': 'other'
+    })
+
+    # --re-create-dir=[VALUE]
+    ConsoleHelper.instance().append_helper(None, {
+        'command': '--re-create-dir',
+        'param': '[VALUE]',
+        'description': 'Set re-create directory for export migration files (optional; default: False)',
         'group': 'other'
     })
 
