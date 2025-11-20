@@ -201,12 +201,13 @@ class MigrationCore:
             r_code = 1
         return r_code
 
-    def migrate_export(self, db_names: list, version: int = -1, dir_export: str = "") -> int:
+    def migrate_export(self, db_names: list, version: int = -1, dir_export: str = "", re_create_dir: bool = False) -> int:
         """Метод выгрузки миграций базы данных в SQL файлы
 
         :param db_names: список имен баз данных для которых требуется миграция
         :param version: версия миграции, до которой требуется актуализировать базы данных
         :param dir_export: каталог для экспорта миграций
+        :param re_create_dir: пересоздать каталог для экспорта миграций
         :returns: Код результата выполнения
         :rtype: int
         """
@@ -233,7 +234,7 @@ class MigrationCore:
         # check export dir
         if not os.path.exists(dir_export):
             os.mkdir(dir_export)
-        else:
+        elif re_create_dir:
             shutil.rmtree(dir_export)
             os.mkdir(dir_export)
 

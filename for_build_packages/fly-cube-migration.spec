@@ -5,7 +5,7 @@ AutoReq: no
 
 
 Name:       fly-cube-migration
-Version: 	1.2.0
+Version: 	1.3.1
 Release: 	1
 Group:      Development/Python
 Packager: 	AnthonySnow887
@@ -58,6 +58,15 @@ rm /usr/bin/fly-cube-migration
 /usr/local/FlyCubeMigration/
 
 %changelog
+* Thu Nov 20 2025 AnthonySnow887 <AnthonySnow887@build> 1.3.1-1
+- Release version 1.3.1
+
+* Thu Nov 06 2025 AnthonySnow887 <AnthonySnow887@build> 1.3.0-1
+- Release version 1.3.0
+
+* Wed Oct 15 2025 AnthonySnow887 <AnthonySnow887@build> 1.2.1-1
+- Release version 1.2.1
+
 * Thu Sep 25 2025 AnthonySnow887 <AnthonySnow887@build> 1.2.0-1
 - Release version 1.2.0
 

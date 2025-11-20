@@ -141,3 +141,10 @@ class Helper:
             tmp_new_string += line.lstrip()
 
         return tmp_new_string
+
+    @staticmethod
+    def str_to_bool(string: str) -> bool:
+        s_lower = string.lower()
+        if s_lower == "true" or s_lower == "yes":
+            return True
+        return False

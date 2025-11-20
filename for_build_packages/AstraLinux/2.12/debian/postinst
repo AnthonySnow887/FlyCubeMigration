@@ -1,3 +1,0 @@
-#!/bin/bash
-ln -s /usr/local/FlyCubeMigration/fly-cube-migration /usr/bin/fly-cube-migration
-update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.7 1
