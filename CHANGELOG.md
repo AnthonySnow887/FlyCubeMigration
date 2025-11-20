@@ -1,3 +1,7 @@
+# 1.3.1 (20.11.2025)
+
+ * Added command ```--re-create-dir``` to set re-create directory for export migration files (optional; default: False).
+
 # 1.3.0 (06.11.2025)
 
  * Added command ```--db-settings``` to display current database connection settings.
