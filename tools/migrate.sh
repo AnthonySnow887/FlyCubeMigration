@@ -71,7 +71,7 @@ function install_migration() {
     then
         rm psql_stderr.txt
     fi
-    psql $host -d $name -U $user -v "ON_ERROR_STOP=1" -f $file &> psql_stderr.txt
+    psql $host -d $name -U $user -v "ON_ERROR_STOP=1" -1 -f $file &> psql_stderr.txt
     result_code=$?
     if [ "$result_code" -eq "0" ]
     then

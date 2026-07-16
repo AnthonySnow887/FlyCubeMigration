@@ -1,3 +1,7 @@
+# 1.3.2 (16.07.2026)
+
+ * Automatic deletion of the primary key (if it was set previously) when installing a new primary key is disabled.
+
 # 1.3.1 (20.11.2025)
 
  * Added command ```--re-create-dir``` to set re-create directory for export migration files (optional; default: False).
