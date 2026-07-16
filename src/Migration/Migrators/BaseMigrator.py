@@ -594,17 +594,16 @@ class BaseMigrator:
 
         :param table_name: название таблицы
         :param column_name: название колонки
+
+        NOTE: Если у таблицы уже есть первичный ключ, то его сначала нужно удалить (drop_primary_key(...))!
+        NOTE: Автоматическое удаление старого первичного ключа не выполняется!
         """
 
         if table_name == "" or column_name == "":
             raise Exception("[BaseMigrator][set_primary_key] Table name or column name is Empty!")
         if not self._db_adapter:
             raise Exception("[BaseMigrator][set_primary_key] Database adapter is None!")
-        # drop old primary keys
-        tmp_p_keys = self.table_primary_keys(table_name)
-        for info in tmp_p_keys.values():
-            self.drop_primary_key(table_name, info['column'])
-        # set new primary key
+        # set primary key
         tmp_table_lst = table_name.split(".")
         tmp_name = self._db_adapter.quote_table_name(f"{tmp_table_lst[len(tmp_table_lst) - 1]}_pkey")
         table_name = self._db_adapter.quote_table_name(table_name)
